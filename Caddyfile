@@ -1,0 +1,17 @@
+{$DOMAIN} {
+    request_body {
+        max_size 32MB
+    }
+    handle /static/* {
+        uri strip_prefix /static
+        root * /srv/staticfiles
+        file_server
+    }
+    handle {
+        reverse_proxy web:8000
+    }
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy same-origin
+    }
+}

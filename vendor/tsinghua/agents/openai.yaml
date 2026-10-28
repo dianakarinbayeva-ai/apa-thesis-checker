@@ -1,0 +1,7 @@
+interface:
+  display_name: "Tsinghua Thesis Checker"
+  short_description: "Tsinghua thesis format workflow skill"
+  default_prompt: "Use $tsinghua-thesis-format-checker-skill to run the thesis review workflow and refresh the report."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+
+guide_checker/output/
+guide_checker/output_tmp/
+
+*.docx
+*.pdf
+*.png
+*.jpg
+*.jpeg
+
+manual_review_results.local.json

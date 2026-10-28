@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+data/
+*.sqlite3*
+media/
+logs/
+build/
+dist/
+*.spec
+*.zip
+*.log
+staticfiles/
+.coverage

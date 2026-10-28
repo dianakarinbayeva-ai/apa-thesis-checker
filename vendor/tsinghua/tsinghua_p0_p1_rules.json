@@ -1,0 +1,1656 @@
+{
+  "meta": {
+    "name": "规则注册表-指南驱动-P0P1草案",
+    "version": "draft-1",
+    "encoding": "utf-8",
+    "primary_source": "研究生学位论文写作指南（202503）.pdf",
+    "goal": "将长篇核查方案收敛为可直接实现的规则注册表，仅保留 P0/P1 范围",
+    "principles": [
+      "指南正文是唯一一级规范来源",
+      "DOCX 文本、DOCX XML、PDF 文本、PDF 可视化是四类并行证据",
+      "P0 优先覆盖硬性格式要求，P1 覆盖高价值质量项",
+      "凡遇表格、公式、图形、跨页断裂，允许抽取失败后回退到 PDF 视觉复核"
+    ]
+  },
+  "data_contracts": [
+    {
+      "name": "guide_rules.json",
+      "purpose": "保存指南规则本体",
+      "required_fields": [
+        "rule_id",
+        "priority",
+        "automation",
+        "source_section",
+        "source_pages",
+        "requirement_summary",
+        "evidence_types",
+        "sop_refs"
+      ]
+    },
+    {
+      "name": "docx_logic.json",
+      "purpose": "保存 DOCX 逻辑结构",
+      "required_fields": [
+        "paragraph_id",
+        "section_id",
+        "style_id",
+        "style_name",
+        "text",
+        "text_norm",
+        "has_drawing",
+        "has_table",
+        "has_omml",
+        "field_type",
+        "page_break_before"
+      ]
+    },
+    {
+      "name": "docx_layout.json",
+      "purpose": "保存 DOCX 排版元数据",
+      "required_fields": [
+        "section_id",
+        "page_width_cm",
+        "page_height_cm",
+        "margin_top_cm",
+        "margin_bottom_cm",
+        "margin_left_cm",
+        "margin_right_cm",
+        "header_distance_cm",
+        "footer_distance_cm",
+        "page_number_format",
+        "page_number_start",
+        "odd_even_headers",
+        "style_effective"
+      ]
+    },
+    {
+      "name": "pdf_pages.json",
+      "purpose": "保存 PDF 页面文本与坐标",
+      "required_fields": [
+        "page_no",
+        "header_text",
+        "footer_text",
+        "possible_page_no",
+        "text_blocks",
+        "captions",
+        "headings"
+      ]
+    },
+    {
+      "name": "visual_findings.json",
+      "purpose": "保存 PDF 可视化复核结论",
+      "required_fields": [
+        "page_no",
+        "rule_id",
+        "screenshot",
+        "note",
+        "status"
+      ]
+    }
+  ],
+  "implementation_phases": [
+    {
+      "phase": "F0",
+      "name": "规则库建立",
+      "outputs": [
+        "guide_rules.json"
+      ],
+      "gates": [
+        "所有 P0/P1 规则都有稳定 rule_id",
+        "所有规则都绑定 source_section 与 source_pages"
+      ]
+    },
+    {
+      "phase": "F1",
+      "name": "证据抽取层",
+      "outputs": [
+        "docx_logic.json",
+        "docx_layout.json",
+        "pdf_pages.json"
+      ],
+      "gates": [
+        "DOCX 段落、section、表格、脚注、标题链可稳定抽取",
+        "PDF 页眉、页脚、题注、标题页首可稳定抽取"
+      ]
+    },
+    {
+      "phase": "F2",
+      "name": "P0 规则判定层",
+      "outputs": [
+        "analysis_p0.json",
+        "visual_findings.json"
+      ],
+      "gates": [
+        "结构、摘要、页面、页码、正文样式、图表题注、文献核心规则可直接出结论"
+      ]
+    },
+    {
+      "phase": "F3",
+      "name": "P1 规则扩展层",
+      "outputs": [
+        "analysis_p1.json"
+      ],
+      "gates": [
+        "目录、名单、附录、脚注、单位、写作风险提示等规则进入统一报告"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "rule_id": "STR-01",
+      "priority": "P0",
+      "automation": "A",
+      "title": "论文组成部分顺序",
+      "source_section": "2.1",
+      "source_pages": [
+        8
+      ],
+      "requirement_summary": "必须按规定顺序包含中文封面、英文封面、名单、授权说明、摘要、Abstract、目录、正文、参考文献、致谢、声明等部分；可选部分按需出现。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "必需部分是否全部存在",
+        "顺序是否正确",
+        "可选部分缺失不报错"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-STR-01"
+      ]
+    },
+    {
+      "rule_id": "STR-02",
+      "priority": "P0",
+      "automation": "B",
+      "title": "每部分独立成页",
+      "source_section": "2.1",
+      "source_pages": [
+        8
+      ],
+      "requirement_summary": "每个部分从新的一页开始。",
+      "evidence_types": [
+        "docx_text",
+        "docx_xml",
+        "pdf_text"
+      ],
+      "inputs": [
+        "docx_logic.json",
+        "docx_layout.json",
+        "pdf_pages.json"
+      ],
+      "check_points": [
+        "部分标题前是否存在明确分页",
+        "PDF 中部分标题是否位于新页页首"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-STR-02"
+      ]
+    },
+    {
+      "rule_id": "STR-03",
+      "priority": "P0",
+      "automation": "A",
+      "title": "全篇 A4 页面",
+      "source_section": "2.2",
+      "source_pages": [
+        8,
+        9
+      ],
+      "requirement_summary": "论文使用 A4 标准纸。",
+      "evidence_types": [
+        "docx_xml",
+        "pdf_text"
+      ],
+      "inputs": [
+        "docx_layout.json",
+        "pdf_pages.json"
+      ],
+      "check_points": [
+        "section 页尺寸是否为 A4",
+        "PDF 页面框尺寸是否一致"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-PAGE-01"
+      ]
+    },
+    {
+      "rule_id": "STR-04",
+      "priority": "P0",
+      "automation": "B",
+      "title": "前四部分单面且无篇眉页码",
+      "source_section": "2.2",
+      "source_pages": [
+        9
+      ],
+      "requirement_summary": "中文封面、英文封面、名单、授权说明单面印刷，不加篇眉和页码。",
+      "evidence_types": [
+        "docx_xml",
+        "pdf_text",
+        "pdf_visual"
+      ],
+      "inputs": [
+        "docx_layout.json",
+        "pdf_pages.json",
+        "visual_findings.json"
+      ],
+      "check_points": [
+        "前四部分无 header/footer 页码文本",
+        "前四部分 section 行为与正文不同"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-PAGE-02"
+      ]
+    },
+    {
+      "rule_id": "STR-05",
+      "priority": "P0",
+      "automation": "B",
+      "title": "中文摘要开始双面并进入正式页眉页码体系",
+      "source_section": "2.2",
+      "source_pages": [
+        9
+      ],
+      "requirement_summary": "从中文摘要开始双面印刷，并编写篇眉和页码。",
+      "evidence_types": [
+        "docx_xml",
+        "pdf_text",
+        "pdf_visual"
+      ],
+      "inputs": [
+        "docx_layout.json",
+        "pdf_pages.json",
+        "visual_findings.json"
+      ],
+      "check_points": [
+        "中文摘要页开始出现页眉与页码",
+        "前置部分和正式部分的 section 设置分界清晰"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-PAGE-02"
+      ]
+    },
+    {
+      "rule_id": "COVER-01",
+      "priority": "P0",
+      "automation": "A",
+      "title": "中文封面内容完整",
+      "source_section": "2.3.1",
+      "source_pages": [
+        9,
+        10,
+        11
+      ],
+      "requirement_summary": "中文封面应包含题目、申请学位类别、作者及导师信息、论文成文打印日期。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "四部分字段是否存在"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-COVER-01"
+      ]
+    },
+    {
+      "rule_id": "COVER-02",
+      "priority": "P0",
+      "automation": "A",
+      "title": "中文题目长度",
+      "source_section": "2.3.1",
+      "source_pages": [
+        10
+      ],
+      "requirement_summary": "中文题目严格控制在 25 个汉字（符）以内。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "题目长度是否 <= 25"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-COVER-01"
+      ]
+    },
+    {
+      "rule_id": "COVER-04",
+      "priority": "P0",
+      "automation": "A",
+      "title": "中英文封面页边距",
+      "source_section": "2.3.1-2.3.2",
+      "source_pages": [
+        11
+      ],
+      "requirement_summary": "中文封面与英文封面页边距必须符合指南规定。",
+      "evidence_types": [
+        "docx_xml"
+      ],
+      "inputs": [
+        "docx_layout.json"
+      ],
+      "check_points": [
+        "中文封面上6下6左4右4 cm",
+        "英文封面上5.5下5.0左3.6右3.6 cm"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-COVER-04"
+      ]
+    },
+    {
+      "rule_id": "ABS-01",
+      "priority": "P0",
+      "automation": "A",
+      "title": "中英文摘要样式",
+      "source_section": "2.3.5",
+      "source_pages": [
+        12
+      ],
+      "requirement_summary": "摘要和 Abstract 的标题及正文样式应符合规定。",
+      "evidence_types": [
+        "docx_xml"
+      ],
+      "inputs": [
+        "docx_layout.json"
+      ],
+      "check_points": [
+        "中文摘要标题与正文样式",
+        "英文摘要标题与正文样式"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-ABS-01"
+      ]
+    },
+    {
+      "rule_id": "ABS-02",
+      "priority": "P0",
+      "automation": "A/B",
+      "title": "中文摘要字数与页数",
+      "source_section": "2.3.5",
+      "source_pages": [
+        12
+      ],
+      "requirement_summary": "中文摘要 800-1000 汉字（符），且篇幅限制在 1 页内。",
+      "evidence_types": [
+        "docx_text",
+        "pdf_text"
+      ],
+      "inputs": [
+        "docx_logic.json",
+        "pdf_pages.json"
+      ],
+      "check_points": [
+        "摘要字数是否在范围内",
+        "PDF 中中文摘要是否只占 1 页"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-ABS-02"
+      ]
+    },
+    {
+      "rule_id": "ABS-03",
+      "priority": "P0",
+      "automation": "A/B",
+      "title": "摘要禁图禁表",
+      "source_section": "2.3.5",
+      "source_pages": [
+        12
+      ],
+      "requirement_summary": "摘要中不要出现图片、图表、表格或其他插图材料。",
+      "evidence_types": [
+        "docx_text",
+        "docx_xml",
+        "pdf_visual"
+      ],
+      "inputs": [
+        "docx_logic.json",
+        "docx_layout.json",
+        "visual_findings.json"
+      ],
+      "check_points": [
+        "摘要范围内无 drawing",
+        "摘要范围内无 table",
+        "PDF 可视化无插图残留"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-ABS-03"
+      ]
+    },
+    {
+      "rule_id": "ABS-04",
+      "priority": "P0",
+      "automation": "A",
+      "title": "中文关键词数量与分隔",
+      "source_section": "2.3.5",
+      "source_pages": [
+        12
+      ],
+      "requirement_summary": "中文关键词不超过 5 个，分号分隔。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "数量是否 <= 5",
+        "是否以分号分隔"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-ABS-04"
+      ]
+    },
+    {
+      "rule_id": "ABS-06",
+      "priority": "P0",
+      "automation": "B",
+      "title": "英文关键词数量与对应关系",
+      "source_section": "2.3.5",
+      "source_pages": [
+        12
+      ],
+      "requirement_summary": "Keywords 与中文关键词对应，数量不超过 5 个，分号分隔。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "数量是否 <= 5",
+        "是否以分号分隔",
+        "与中文关键词数量基本对应"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-ABS-04"
+      ]
+    },
+    {
+      "rule_id": "TOC-01",
+      "priority": "P0",
+      "automation": "A",
+      "title": "目录层级上限",
+      "source_section": "2.3.6",
+      "source_pages": [
+        12
+      ],
+      "requirement_summary": "目录列至二级节标题即可。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "目录中是否出现三级及以上条目"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-TOC-01"
+      ]
+    },
+    {
+      "rule_id": "TOC-02",
+      "priority": "P0",
+      "automation": "B",
+      "title": "目录覆盖范围",
+      "source_section": "2.3.6",
+      "source_pages": [
+        12
+      ],
+      "requirement_summary": "目录内容应从中文摘要开始，直至论文结束。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "目录与标题链是否对应",
+        "起点是否为摘要",
+        "终点是否覆盖后置部分"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-TOC-02"
+      ]
+    },
+    {
+      "rule_id": "BODY-01",
+      "priority": "P0",
+      "automation": "B",
+      "title": "正文右页起章",
+      "source_section": "2.3.9.1",
+      "source_pages": [
+        13,
+        19
+      ],
+      "requirement_summary": "正文从另页右页开始，每章应另起页。",
+      "evidence_types": [
+        "docx_xml",
+        "pdf_text",
+        "pdf_visual"
+      ],
+      "inputs": [
+        "docx_layout.json",
+        "pdf_pages.json",
+        "visual_findings.json"
+      ],
+      "check_points": [
+        "正文首页是否为奇数页",
+        "每章标题页是否另起页"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-BODY-01"
+      ]
+    },
+    {
+      "rule_id": "BODY-03",
+      "priority": "P0",
+      "automation": "A/B",
+      "title": "章节标题样式",
+      "source_section": "2.3.9.2",
+      "source_pages": [
+        13,
+        14
+      ],
+      "requirement_summary": "章标题、一级节、二级节、三级节标题样式应符合规定。",
+      "evidence_types": [
+        "docx_xml"
+      ],
+      "inputs": [
+        "docx_layout.json"
+      ],
+      "check_points": [
+        "样式定义是否正确",
+        "实际段落是否被局部覆盖破坏"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-STYLE-01"
+      ]
+    },
+    {
+      "rule_id": "BODY-04",
+      "priority": "P0",
+      "automation": "A/B",
+      "title": "正文段落样式",
+      "source_section": "2.3.9.3",
+      "source_pages": [
+        14
+      ],
+      "requirement_summary": "正文段落应采用小四、首行缩进 2 字符、固定 20 磅、段前段后 0。",
+      "evidence_types": [
+        "docx_xml"
+      ],
+      "inputs": [
+        "docx_layout.json"
+      ],
+      "check_points": [
+        "正文样式定义",
+        "正文抽样段落实际格式"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-STYLE-02"
+      ]
+    },
+    {
+      "rule_id": "PAGE-01",
+      "priority": "P0",
+      "automation": "A",
+      "title": "中文摘要之后页面设置",
+      "source_section": "2.4.1",
+      "source_pages": [
+        19
+      ],
+      "requirement_summary": "中文摘要开始之后统一采用 A4，页边距上下左右均 3.0 cm，页眉页脚距边界 2.2 cm。",
+      "evidence_types": [
+        "docx_xml"
+      ],
+      "inputs": [
+        "docx_layout.json"
+      ],
+      "check_points": [
+        "页面尺寸",
+        "页边距",
+        "页眉距离",
+        "页脚距离"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-PAGE-01"
+      ]
+    },
+    {
+      "rule_id": "PAGE-02",
+      "priority": "P0",
+      "automation": "B",
+      "title": "篇眉内容与显示范围",
+      "source_section": "2.4.2",
+      "source_pages": [
+        19,
+        20
+      ],
+      "requirement_summary": "篇眉从摘要开始，内容与该部分章标题相同，奇偶页相同，各部分首页也要有篇眉。",
+      "evidence_types": [
+        "docx_xml",
+        "pdf_text",
+        "pdf_visual"
+      ],
+      "inputs": [
+        "docx_layout.json",
+        "pdf_pages.json",
+        "visual_findings.json"
+      ],
+      "check_points": [
+        "摘要开始是否有篇眉",
+        "篇眉是否与部分标题一致",
+        "奇偶页是否一致",
+        "各部分首页是否显示篇眉"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-PAGE-03"
+      ]
+    },
+    {
+      "rule_id": "PAGE-03",
+      "priority": "P0",
+      "automation": "A/B",
+      "title": "页码制式切换",
+      "source_section": "2.4.2",
+      "source_pages": [
+        20
+      ],
+      "requirement_summary": "摘要至符号说明使用大写罗马数字，正文起使用阿拉伯数字并从 1 开始。",
+      "evidence_types": [
+        "docx_xml",
+        "pdf_text"
+      ],
+      "inputs": [
+        "docx_layout.json",
+        "pdf_pages.json"
+      ],
+      "check_points": [
+        "前置部分页码格式 upperRoman",
+        "前置部分起始值 1",
+        "正文部分页码格式 decimal",
+        "正文部分起始值 1"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-PAGE-04"
+      ]
+    },
+    {
+      "rule_id": "FIG-01",
+      "priority": "P0",
+      "automation": "A/B",
+      "title": "图题编号与位置",
+      "source_section": "2.3.19",
+      "source_pages": [
+        17,
+        18
+      ],
+      "requirement_summary": "图按章编号，图题置于图下方，格式符合规定。",
+      "evidence_types": [
+        "docx_text",
+        "docx_xml",
+        "pdf_text"
+      ],
+      "inputs": [
+        "docx_logic.json",
+        "docx_layout.json",
+        "pdf_pages.json"
+      ],
+      "check_points": [
+        "图号是否按章编号",
+        "编号是否连续",
+        "图题是否位于图下方"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-FIG-01"
+      ]
+    },
+    {
+      "rule_id": "TAB-03",
+      "priority": "P0",
+      "automation": "B",
+      "title": "表题编号与位置",
+      "source_section": "2.3.19",
+      "source_pages": [
+        18,
+        19
+      ],
+      "requirement_summary": "表按章编号，表题置于表上方，续表重复表头。",
+      "evidence_types": [
+        "docx_text",
+        "docx_xml",
+        "pdf_text",
+        "pdf_visual"
+      ],
+      "inputs": [
+        "docx_logic.json",
+        "docx_layout.json",
+        "pdf_pages.json",
+        "visual_findings.json"
+      ],
+      "check_points": [
+        "表号是否按章编号",
+        "表题是否在表上方",
+        "续表是否重复表头"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-TAB-03"
+      ]
+    },
+    {
+      "rule_id": "REFSEC-01",
+      "priority": "P0",
+      "automation": "A/B",
+      "title": "参考文献节排版",
+      "source_section": "2.3.10",
+      "source_pages": [
+        14
+      ],
+      "requirement_summary": "参考文献标题与章标题同级；正文五号字、固定 16 磅、段前 3 磅、悬挂缩进 1 cm。",
+      "evidence_types": [
+        "docx_text",
+        "docx_xml"
+      ],
+      "inputs": [
+        "docx_logic.json",
+        "docx_layout.json"
+      ],
+      "check_points": [
+        "标题样式",
+        "条目格式",
+        "悬挂缩进"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-REF-01"
+      ]
+    },
+    {
+      "rule_id": "BIB-04",
+      "priority": "P0",
+      "automation": "A/B",
+      "title": "正文引用制式统一",
+      "source_section": "3.4",
+      "source_pages": [
+        20
+      ],
+      "requirement_summary": "正文引用只能选择一种标注制式，并全文保持统一。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "是否混用顺序编码制与著者-出版年制"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-BIB-04"
+      ]
+    },
+    {
+      "rule_id": "BIB-08",
+      "priority": "P0",
+      "automation": "B",
+      "title": "正文引用与文献表一一对应",
+      "source_section": "3.5",
+      "source_pages": [
+        21
+      ],
+      "requirement_summary": "参考文献表中所列文献应与正文中引用文献一一对应。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "正文有而文献表无",
+        "文献表有而正文无"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-BIB-01"
+      ]
+    },
+    {
+      "rule_id": "BIB-03",
+      "priority": "P0",
+      "automation": "B",
+      "title": "参考文献著录结构合法性",
+      "source_section": "3.3",
+      "source_pages": [
+        16,
+        17,
+        18,
+        19,
+        20
+      ],
+      "requirement_summary": "主要文献类型的著录结构应符合 GB/T 7714-2015 的最小字段要求。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "类型标识是否存在",
+        "各类型最小字段是否齐全",
+        "明显格式残缺是否能识别"
+      ],
+      "fail_severity": "high",
+      "sop_refs": [
+        "SOP-BIB-03"
+      ]
+    },
+    {
+      "rule_id": "WR-08",
+      "priority": "P1",
+      "automation": "A/B",
+      "title": "结论禁用夸大词",
+      "source_section": "4.6",
+      "source_pages": [
+        27
+      ],
+      "requirement_summary": "无充分证据时避免使用“首次”“领先”“填补空白”等词。",
+      "evidence_types": [
+        "docx_text",
+        "pdf_visual"
+      ],
+      "inputs": [
+        "docx_logic.json",
+        "visual_findings.json"
+      ],
+      "check_points": [
+        "是否命中高风险夸大词",
+        "命中后是否进入人工复核"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-WR-07"
+      ]
+    },
+    {
+      "rule_id": "LIST-01",
+      "priority": "P1",
+      "automation": "B",
+      "title": "名单页格式",
+      "source_section": "2.3.3",
+      "source_pages": [
+        11
+      ],
+      "requirement_summary": "名单页使用无框线表格，标题和表格内容样式符合要求。",
+      "evidence_types": [
+        "docx_xml",
+        "pdf_visual"
+      ],
+      "inputs": [
+        "docx_layout.json",
+        "visual_findings.json"
+      ],
+      "check_points": [
+        "是否无框线",
+        "标题与表格样式"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-LIST-01"
+      ]
+    },
+    {
+      "rule_id": "LIST-02",
+      "priority": "P1",
+      "automation": "B",
+      "title": "名单页页数限制",
+      "source_section": "2.3.3",
+      "source_pages": [
+        11
+      ],
+      "requirement_summary": "名单页原则上限制在 1 页；若拆为两页，标题也应相应变化。",
+      "evidence_types": [
+        "pdf_text",
+        "pdf_visual"
+      ],
+      "inputs": [
+        "pdf_pages.json",
+        "visual_findings.json"
+      ],
+      "check_points": [
+        "页数是否超过 1",
+        "超过后标题是否调整"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-LIST-02"
+      ]
+    },
+    {
+      "rule_id": "AUTH-01",
+      "priority": "P1",
+      "automation": "B",
+      "title": "授权说明模板一致性",
+      "source_section": "2.3.4",
+      "source_pages": [
+        12
+      ],
+      "requirement_summary": "授权说明应使用统一内容和格式。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "正文内容与基准模板是否一致"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-AUTH-01"
+      ]
+    },
+    {
+      "rule_id": "ABS-05",
+      "priority": "P1",
+      "automation": "B",
+      "title": "英文摘要英文标点与正文风格",
+      "source_section": "2.3.5",
+      "source_pages": [
+        12
+      ],
+      "requirement_summary": "英文摘要正文使用英文标点，样式符合规定。",
+      "evidence_types": [
+        "docx_text",
+        "docx_xml"
+      ],
+      "inputs": [
+        "docx_logic.json",
+        "docx_layout.json"
+      ],
+      "check_points": [
+        "英文摘要是否混入大量中文标点",
+        "英文摘要样式是否正确"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-ABS-01"
+      ]
+    },
+    {
+      "rule_id": "ABS-07",
+      "priority": "P1",
+      "automation": "C",
+      "title": "中英文摘要内容对应",
+      "source_section": "2.3.5",
+      "source_pages": [
+        12
+      ],
+      "requirement_summary": "中英文摘要文字内容应对应。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "方法、对象、结论要素是否明显缺失或错位"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-ABS-07"
+      ]
+    },
+    {
+      "rule_id": "TOC-03",
+      "priority": "P1",
+      "automation": "B",
+      "title": "目录样式与悬挂",
+      "source_section": "2.3.6",
+      "source_pages": [
+        12
+      ],
+      "requirement_summary": "目录标题、正文、缩进、固定 20 磅行距和跨行悬挂应符合要求。",
+      "evidence_types": [
+        "docx_xml",
+        "pdf_visual"
+      ],
+      "inputs": [
+        "docx_layout.json",
+        "visual_findings.json"
+      ],
+      "check_points": [
+        "标题样式",
+        "正文行距",
+        "缩进层级",
+        "跨行悬挂"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-TOC-03"
+      ]
+    },
+    {
+      "rule_id": "TOC-04",
+      "priority": "P1",
+      "automation": "A",
+      "title": "目录自动生成",
+      "source_section": "2.3.6",
+      "source_pages": [
+        12
+      ],
+      "requirement_summary": "目录宜在文档编辑软件中自动生成。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "是否存在 TOC 域代码"
+      ],
+      "fail_severity": "low",
+      "sop_refs": [
+        "SOP-TOC-04"
+      ]
+    },
+    {
+      "rule_id": "LOT-01",
+      "priority": "P1",
+      "automation": "B",
+      "title": "图表清单必要性与位置",
+      "source_section": "2.3.7",
+      "source_pages": [
+        12,
+        13
+      ],
+      "requirement_summary": "图表较多时应设置插图清单/附表清单/合并清单，并置于目录之后。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "图表数量是否达到需建清单的阈值",
+        "若设置清单，是否位于目录之后"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-LOT-01"
+      ]
+    },
+    {
+      "rule_id": "ABBR-01",
+      "priority": "P1",
+      "automation": "B",
+      "title": "缩略语说明必要性",
+      "source_section": "2.3.8",
+      "source_pages": [
+        13
+      ],
+      "requirement_summary": "缩略语和符号较多时应有专门说明，否则应在文中随即解释。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "高频缩略语数量",
+        "是否存在专门说明页",
+        "首次出现是否解释"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-ABBR-01",
+        "SOP-TERM-01"
+      ]
+    },
+    {
+      "rule_id": "FOOT-01",
+      "priority": "P1",
+      "automation": "B",
+      "title": "脚注结构与编号",
+      "source_section": "2.3.9.4",
+      "source_pages": [
+        14
+      ],
+      "requirement_summary": "脚注使用圈码上标，页下注，按页编号。",
+      "evidence_types": [
+        "docx_text",
+        "docx_xml",
+        "pdf_text"
+      ],
+      "inputs": [
+        "docx_logic.json",
+        "docx_layout.json",
+        "pdf_pages.json"
+      ],
+      "check_points": [
+        "脚注引用与正文是否对应",
+        "脚注是否按页重新编号"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-FOOT-01"
+      ]
+    },
+    {
+      "rule_id": "FOOT-02",
+      "priority": "P1",
+      "automation": "A/B",
+      "title": "脚注样式",
+      "source_section": "2.3.9.4",
+      "source_pages": [
+        14
+      ],
+      "requirement_summary": "脚注正文小五、单倍行距、段前后 0、悬挂 1.5 字符。",
+      "evidence_types": [
+        "docx_xml"
+      ],
+      "inputs": [
+        "docx_layout.json"
+      ],
+      "check_points": [
+        "字号",
+        "行距",
+        "悬挂缩进"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-FOOT-02"
+      ]
+    },
+    {
+      "rule_id": "REFSEC-02",
+      "priority": "P1",
+      "automation": "B",
+      "title": "参考文献单条尽量不跨页",
+      "source_section": "2.3.10",
+      "source_pages": [
+        15
+      ],
+      "requirement_summary": "每一条参考文献尽量写在同一页内。",
+      "evidence_types": [
+        "pdf_text",
+        "pdf_visual"
+      ],
+      "inputs": [
+        "pdf_pages.json",
+        "visual_findings.json"
+      ],
+      "check_points": [
+        "单条文献是否跨页",
+        "跨页位置是否明显影响阅读"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-REF-02"
+      ]
+    },
+    {
+      "rule_id": "APP-01",
+      "priority": "P1",
+      "automation": "A/B",
+      "title": "附录标题与编号",
+      "source_section": "2.3.11",
+      "source_pages": [
+        15
+      ],
+      "requirement_summary": "附录格式与正文相同，编号用附录 A/B/C，只有一个附录时也要编号为 A。",
+      "evidence_types": [
+        "docx_text",
+        "docx_xml"
+      ],
+      "inputs": [
+        "docx_logic.json",
+        "docx_layout.json"
+      ],
+      "check_points": [
+        "附录标题命名模式",
+        "单附录是否仍为 A"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-APP-01"
+      ]
+    },
+    {
+      "rule_id": "APP-02",
+      "priority": "P1",
+      "automation": "B",
+      "title": "附录内部编号独立",
+      "source_section": "2.3.11",
+      "source_pages": [
+        15
+      ],
+      "requirement_summary": "附录中的图、表、式、参考文献编号应独立，并带附录字母前缀。",
+      "evidence_types": [
+        "docx_text",
+        "pdf_text"
+      ],
+      "inputs": [
+        "docx_logic.json",
+        "pdf_pages.json"
+      ],
+      "check_points": [
+        "图 A.1、表 B.2、式（C-3）等格式"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-APP-02"
+      ]
+    },
+    {
+      "rule_id": "ACK-01",
+      "priority": "P1",
+      "automation": "A/B",
+      "title": "致谢页数与篇眉",
+      "source_section": "2.3.12",
+      "source_pages": [
+        15
+      ],
+      "requirement_summary": "致谢限 1 页，标题和篇眉内容均为“致谢”。",
+      "evidence_types": [
+        "docx_text",
+        "pdf_text"
+      ],
+      "inputs": [
+        "docx_logic.json",
+        "pdf_pages.json"
+      ],
+      "check_points": [
+        "是否限 1 页",
+        "篇眉是否为“致谢”"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-POST-01"
+      ]
+    },
+    {
+      "rule_id": "DEC-01",
+      "priority": "P1",
+      "automation": "A/B",
+      "title": "声明顺序、页数与篇眉",
+      "source_section": "2.3.13",
+      "source_pages": [
+        15
+      ],
+      "requirement_summary": "声明放在致谢之后，单独一页，标题和篇眉均为“声明”。",
+      "evidence_types": [
+        "docx_text",
+        "pdf_text"
+      ],
+      "inputs": [
+        "docx_logic.json",
+        "pdf_pages.json"
+      ],
+      "check_points": [
+        "是否位于致谢之后",
+        "是否单独一页",
+        "篇眉是否为“声明”"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-POST-02"
+      ]
+    },
+    {
+      "rule_id": "CV-01",
+      "priority": "P1",
+      "automation": "B",
+      "title": "个人简历与成果部分",
+      "source_section": "2.3.14",
+      "source_pages": [
+        15,
+        16
+      ],
+      "requirement_summary": "个人简历应包含基础信息；相关学术成果按类型列出，若无则写“无”。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "是否有基础简历信息",
+        "成果是否按类型列示",
+        "无成果时是否明确写“无”"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-POST-03"
+      ]
+    },
+    {
+      "rule_id": "UNIT-01",
+      "priority": "P1",
+      "automation": "B",
+      "title": "量和单位统一性",
+      "source_section": "2.3.18",
+      "source_pages": [
+        17
+      ],
+      "requirement_summary": "单位名称可以采用国际符号，也可以用中文名称，但全文应统一，不得混用。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "同一量是否混用中文单位和国际符号"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-UNIT-01"
+      ]
+    },
+    {
+      "rule_id": "FIG-03",
+      "priority": "P1",
+      "automation": "B/C",
+      "title": "图紧跟首次引用且尽量同页",
+      "source_section": "2.3.19",
+      "source_pages": [
+        18
+      ],
+      "requirement_summary": "图宜紧置于首次引用文字之后，并尽可能显示在同一页。",
+      "evidence_types": [
+        "docx_text",
+        "pdf_text",
+        "pdf_visual"
+      ],
+      "inputs": [
+        "docx_logic.json",
+        "pdf_pages.json",
+        "visual_findings.json"
+      ],
+      "check_points": [
+        "首次引用位置与图题位置关系",
+        "是否明显提前或滞后"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-FIG-03"
+      ]
+    },
+    {
+      "rule_id": "TAB-01",
+      "priority": "P1",
+      "automation": "B/C",
+      "title": "表格三线表与自明性",
+      "source_section": "2.3.19",
+      "source_pages": [
+        18
+      ],
+      "requirement_summary": "表应具有自明性，优先采用三线表，必要时可加辅助线。",
+      "evidence_types": [
+        "docx_xml",
+        "pdf_visual"
+      ],
+      "inputs": [
+        "docx_layout.json",
+        "visual_findings.json"
+      ],
+      "check_points": [
+        "边框结构是否接近三线表",
+        "复杂表格是否需要人工复核"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-TAB-01"
+      ]
+    },
+    {
+      "rule_id": "TAB-02",
+      "priority": "P1",
+      "automation": "A/B",
+      "title": "表内文字样式",
+      "source_section": "2.3.19",
+      "source_pages": [
+        18
+      ],
+      "requirement_summary": "表单元格文字 11pt、单倍行距、段前后 3 磅，对齐应合理。",
+      "evidence_types": [
+        "docx_xml"
+      ],
+      "inputs": [
+        "docx_layout.json"
+      ],
+      "check_points": [
+        "字号",
+        "行距",
+        "段前段后",
+        "对齐"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-TAB-02"
+      ]
+    },
+    {
+      "rule_id": "EQ-01",
+      "priority": "P1",
+      "automation": "B",
+      "title": "公式排版模式统一",
+      "source_section": "2.3.19",
+      "source_pages": [
+        19
+      ],
+      "requirement_summary": "公式可以居中或缩进两字，但全文应统一使用同一种方式。",
+      "evidence_types": [
+        "docx_text",
+        "docx_xml"
+      ],
+      "inputs": [
+        "docx_logic.json",
+        "docx_layout.json"
+      ],
+      "check_points": [
+        "全文公式段落模式是否混用"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-EQ-01"
+      ]
+    },
+    {
+      "rule_id": "EQ-02",
+      "priority": "P1",
+      "automation": "B",
+      "title": "公式编号位置与形式",
+      "source_section": "2.3.19",
+      "source_pages": [
+        19
+      ],
+      "requirement_summary": "公式编号置于右边行末，带括号，不加连线。",
+      "evidence_types": [
+        "docx_text",
+        "pdf_text"
+      ],
+      "inputs": [
+        "docx_logic.json",
+        "pdf_pages.json"
+      ],
+      "check_points": [
+        "编号是否在右端",
+        "是否使用括号",
+        "是否有额外连线"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-EQ-02"
+      ]
+    },
+    {
+      "rule_id": "G-03",
+      "priority": "P1",
+      "automation": "B",
+      "title": "规范汉字与繁简混用",
+      "source_section": "1.3 / 4.1",
+      "source_pages": [
+        7,
+        25
+      ],
+      "requirement_summary": "论文一般采用规范汉字与简体中文撰写。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "是否出现明显繁体字、异体字或乱码字符"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-LANG-02"
+      ]
+    },
+    {
+      "rule_id": "G-06",
+      "priority": "P1",
+      "automation": "B",
+      "title": "缩写与新术语首次解释",
+      "source_section": "4.1",
+      "source_pages": [
+        25
+      ],
+      "requirement_summary": "论文中如出现非通用性新名词、新术语或新概念，需随即解释清楚。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "高频缩写首次出现附近是否有解释"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-TERM-01"
+      ]
+    },
+    {
+      "rule_id": "WR-04",
+      "priority": "P1",
+      "automation": "B/C",
+      "title": "摘要不得写成提纲",
+      "source_section": "4.3",
+      "source_pages": [
+        25,
+        26
+      ],
+      "requirement_summary": "摘要不能写成“第 1 章……；第 2 章……”式章节提纲。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "是否命中章节提纲式模式"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-WR-03"
+      ]
+    },
+    {
+      "rule_id": "WR-05",
+      "priority": "P1",
+      "automation": "B/C",
+      "title": "引言要素覆盖",
+      "source_section": "4.4",
+      "source_pages": [
+        26
+      ],
+      "requirement_summary": "引言通常应包含问题提出、背景意义、文献综述、研究方法、结构安排。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "五类要素是否有明显语义锚点"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-WR-04"
+      ]
+    },
+    {
+      "rule_id": "WR-07",
+      "priority": "P1",
+      "automation": "B/C",
+      "title": "结论要素覆盖",
+      "source_section": "4.6",
+      "source_pages": [
+        26,
+        27
+      ],
+      "requirement_summary": "结论应包含核心观点、贡献、局限、未来工作，不应只是各章小结重复。",
+      "evidence_types": [
+        "docx_text"
+      ],
+      "inputs": [
+        "docx_logic.json"
+      ],
+      "check_points": [
+        "是否出现贡献、局限、未来工作等要素"
+      ],
+      "fail_severity": "medium",
+      "sop_refs": [
+        "SOP-WR-06"
+      ]
+    }
+  ],
+  "deferred_out_of_scope": [
+    {
+      "rule_family": "COM-01 / DEF-01",
+      "reason": "需要外部审批材料或原始评语文件，无法仅凭论文文件完成核验"
+    },
+    {
+      "rule_family": "FIG-02 / FIG-04 / TAB-04 / TAB-05 / EQ-03",
+      "reason": "更依赖视觉与人工判读，适合在 P1 后期或人工终审阶段补入"
+    },
+    {
+      "rule_family": "WR-01 / WR-02 / WR-06",
+      "reason": "偏学术写作评价，自动化置信度有限，暂不纳入首轮硬判"
+    }
+  ]
+}

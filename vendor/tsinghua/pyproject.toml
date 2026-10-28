@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tsinghua-thesis-format-checker-skill"
+version = "0.1.0"
+description = "Codex skill and Python workflow for Tsinghua University thesis format review."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "lxml>=5.0.0",
+  "PyMuPDF>=1.24.0",
+]
+
+[project.scripts]
+tsinghua-thesis-check = "guide_checker.cli.run_checker:main"
+tsinghua-thesis-full-review = "guide_checker.cli.run_full_review:main"
+
+[tool.setuptools.packages.find]
+include = ["guide_checker*"]

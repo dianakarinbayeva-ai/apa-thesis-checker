@@ -1,0 +1,58 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: apa
+      POSTGRES_USER: apa
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes: ["database:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U apa"]
+      interval: 5s
+      retries: 20
+  init:
+    build: .
+    command: ["sh", "-c", "python manage.py migrate --noinput && python manage.py collectstatic --noinput"]
+    environment: &environment
+      POSTGRES_HOST: db
+      POSTGRES_DB: apa
+      POSTGRES_USER: apa
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY}
+      ALLOWED_HOSTS: ${DOMAIN:?Set DOMAIN}
+      CSRF_TRUSTED_ORIGINS: https://${DOMAIN}
+      APA_HTTPS: "1"
+    volumes: ["application:/data"]
+    depends_on:
+      db: {condition: service_healthy}
+  web:
+    build: .
+    restart: unless-stopped
+    environment: *environment
+    volumes: ["application:/data"]
+    depends_on:
+      init: {condition: service_completed_successfully}
+  worker:
+    build: .
+    command: ["python", "manage.py", "worker"]
+    restart: unless-stopped
+    environment: *environment
+    volumes: ["application:/data"]
+    depends_on:
+      init: {condition: service_completed_successfully}
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - application:/srv:ro
+      - certificates:/data
+    depends_on: [web]
+volumes:
+  database:
+  application:
+  certificates:
