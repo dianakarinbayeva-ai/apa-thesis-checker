@@ -3,6 +3,10 @@
 A trilingual platform for automatically reviewing thesis PDFs against the
 requirements of the Academy of Public Administration under the President of Kazakhstan.
 
+Version 0.2.0 uses the original apa.kz logo and exact brand colours, with a new
+home page, dashboard and forms. PDF drag-and-drop, side-by-side document/report
+viewing and page-number navigation are included.
+
 1. Extract the Windows ZIP into a writable folder.
 2. Run `APA Thesis Checker.exe`. Your browser opens at `127.0.0.1:8765`.
 3. Register an account. The first local account becomes the administrator.

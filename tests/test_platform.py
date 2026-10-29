@@ -141,8 +141,12 @@ class WebTests(TestCase):
             self.assertTrue(len(doc)>0)
             self.assertIn(TEXT[language]['report'],doc[0].get_text())
             doc.close()
+        preview=self.client.get(f'/work/{job.pk}/preview/')
+        self.assertEqual(preview.status_code,200)
+        self.assertTrue(preview['Content-Disposition'].startswith('inline'))
+        preview.close()
         self.client.force_login(self.other)
-        for ending in ['', 'status/','download/pdf/','download/json/','download/original/']:
+        for ending in ['', 'status/','preview/','download/pdf/','download/json/','download/original/']:
             self.assertEqual(self.client.get(f'/work/{job.pk}/{ending}').status_code,404)
         self.assertEqual(self.client.post(f'/work/{job.pk}/delete/').status_code,404)
         self.client.force_login(self.user)

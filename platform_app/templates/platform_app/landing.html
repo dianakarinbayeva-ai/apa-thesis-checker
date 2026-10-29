@@ -1,0 +1,14 @@
+{% extends 'platform_app/base.html' %}
+{% block main_class %}landing-main{% endblock %}
+{% block content %}
+<section class="landing-hero academy-photo"><div class="wrap landing-hero-inner">
+<span class="eyebrow light"><span></span>{{ t.platform_label }}</span><h1>{{ t.hero_title }}</h1><p>{{ t.hero_description }}</p>
+<div class="hero-actions"><a class="button white" href="{% url 'upload' %}">{{ t.start }}<svg class="icon"><use href="#i-arrow"/></svg></a><a class="hero-text-link" href="{% url 'guide' %}">{{ t.learn_more }}<span>↗</span></a></div>
+<div class="hero-trust"><svg class="icon"><use href="#i-shield"/></svg><span>{{ t.local_privacy }}</span><i></i><span>PDF · {{ t.automatic_label }}</span></div>
+</div></section>
+<div class="wrap"><section class="capabilities" aria-label="{{ t.requirements }}">
+<div><strong>PDF</strong><span>{{ t.pdf_file }}</span></div><div><strong>30 <small>MB</small></strong><span>{{ t.file_size_label }}</span></div><div><strong>300</strong><span>{{ t.page_limit_label }}</span></div><div><strong>KZ / RU / EN</strong><span>{{ t.languages_label }}</span></div></section>
+<section class="landing-section"><div class="section-heading"><div><span class="eyebrow">01 — 03</span><h2>{{ t.how_it_works }}</h2></div><a class="inline-link" href="{% url 'upload' %}">{{ t.new_check }}<svg class="icon"><use href="#i-arrow"/></svg></a></div>
+<div class="process-grid"><article class="process-card"><span class="step-number">01</span><svg class="icon process-icon"><use href="#i-upload"/></svg><h3>{{ t.step1 }}</h3><p>{{ t.upload_description }}</p></article><article class="process-card"><span class="step-number">02</span><svg class="icon process-icon"><use href="#i-check"/></svg><h3>{{ t.step2 }}</h3><p>{{ t.processing_description }}</p></article><article class="process-card"><span class="step-number">03</span><svg class="icon process-icon"><use href="#i-file"/></svg><h3>{{ t.step3 }}</h3><p>{{ t.report_description }}</p></article></div></section>
+<section class="standards-banner"><div class="standard-symbol"><svg class="icon"><use href="#i-book"/></svg></div><div><span class="eyebrow">13.09.2024 · № 586</span><h2>{{ t.standard_label }}</h2><p>{{ t.format_summary }}</p></div><a class="button secondary" href="{% url 'guide' %}">{{ t.guide }}<svg class="icon"><use href="#i-arrow"/></svg></a></section></div>
+{% endblock %}

@@ -98,8 +98,9 @@ def language(request):
     return redirect(target)
 
 
-@login_required
 def dashboard(request):
+    if not request.user.is_authenticated:
+        return render(request, "platform_app/landing.html")
     works = Submission.objects.filter(owner=request.user)
     return render(request, "platform_app/dashboard.html", dict(works=works[:5], total=works.count(),
                  completed=works.filter(status="done").count(), pending=works.filter(status__in=["queued", "processing"]).count()))
@@ -139,7 +140,8 @@ def upload(request):
                 work.file.save(f"{work.id}.pdf", file, save=False)
                 work.save()
                 return redirect("detail", pk=work.pk)
-    return render(request, "platform_app/upload.html", {"error": strings(request.LANGUAGE_CODE).get(error)})
+    profile = RuleProfile.objects.filter(active=True).first()
+    return render(request, "platform_app/upload.html", {"error": strings(request.LANGUAGE_CODE).get(error), "profile": profile})
 
 
 @login_required
@@ -158,6 +160,15 @@ def job_status(request, pk):
     job = get_object_or_404(Submission, pk=pk, owner=request.user)
     response = JsonResponse({"status": job.status})
     response["Cache-Control"] = "no-store"
+    return response
+
+
+@login_required
+def preview(request, pk):
+    job = get_object_or_404(Submission, pk=pk, owner=request.user)
+    response = FileResponse(job.file.open("rb"), content_type="application/pdf", filename="document.pdf")
+    response["Content-Disposition"] = 'inline; filename="document.pdf"'
+    response["Cache-Control"] = "private, no-store"
     return response
 
 
@@ -208,7 +219,8 @@ def source(request):
 
 
 def health(request):
-    return JsonResponse({"status": "ok", "version": "0.1.0"})
+    from .version import VERSION
+    return JsonResponse({"status": "ok", "version": VERSION})
 
 
 def not_found(request, exception=None):

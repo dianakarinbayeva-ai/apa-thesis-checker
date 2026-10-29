@@ -1,0 +1,19 @@
+{
+  "reference": "https://www.apa.kz/",
+  "observed": "2026-10-29",
+  "colors": {
+    "primary": "#274476",
+    "secondary": "#2E4B7D",
+    "white": "#FFFFFF",
+    "surface": "#f9f9f9",
+    "border": "#e8e8e8"
+  },
+  "logo": {
+    "url": "https://www.apa.kz/wp-content/uploads/2025/12/%D0%BB%D0%BE%D0%B3%D0%BE%D0%BA%D0%B0%D0%B7.svg",
+    "sha256": "43e2b8ee18fa87a7d702462fad9e47da2be3c462abe97d96563c1d50edc5529f"
+  },
+  "background": {
+    "url": "https://www.apa.kz/wp-content/uploads/2024/10/%D1%84%D0%BE%D0%BD-%D1%81%D0%B0%D0%B9%D1%82.jpg",
+    "sha256": "b5b95ca5f3573799b1fcd68574adb98b213ac3089b8531ba6c77911c2f022d76"
+  }
+}

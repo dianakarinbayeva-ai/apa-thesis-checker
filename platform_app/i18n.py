@@ -129,7 +129,50 @@ how_it_works|Үш қарапайым қадам|Три простых шага|T
 step1|PDF жүктеңіз|Загрузите PDF|Upload your PDF
 step2|Талаптарды тексереміз|Проверим требования|We check the rules
 step3|Ұсыныстар алыңыз|Получите рекомендации|Get clear recommendations
-draft|Алдын ала нұсқа · v0.1.0|Предварительная версия · v0.1.0|Preview release · v0.1.0
+draft|Алдын ала нұсқа|Предварительная версия|Preview release
+home|Басты бет|Главная|Home
+platform_label|Магистранттарға арналған платформа|Платформа для магистрантов|A platform for master's students
+hero_title|Магистрлік жұмысыңызды сенімді тапсырыңыз|Подготовьте вашу работу к сдаче|Prepare your thesis for submission
+hero_description|PDF құжатын жүктеңіз. Академия талаптарына сай рәсімдеуді автоматты тексеріп, әр бет бойынша түсінікті есеп алыңыз.|Загрузите PDF. Получите автоматическую проверку оформления по требованиям Академии и понятный отчёт по страницам.|Upload your PDF. Get an automatic review against the Academy's requirements and clear page-by-page findings.
+academy_website|Академия сайты|Сайт Академии|Academy website
+learn_more|Талаптармен танысу|Посмотреть требования|Explore the requirements
+file_size_label|Файл көлемі|Размер файла|File size
+page_limit_label|Құжат көлемі|Объём документа|Document length
+languages_label|Интерфейс және есеп|Интерфейс и отчёт|Interface and reports
+standard_label|Академия талаптары|Требования Академии|Academy requirements
+upload_description|Жұмысыңыздың PDF нұсқасын таңдап, тіл мен оқу ұзақтығын көрсетіңіз.|Выберите PDF вашей работы, укажите язык и длительность программы.|Choose your thesis PDF, document language and programme duration.
+processing_description|Жүйе бет пішімін, қаріпті, нөмірленуді және құрылымды автоматты тексереді.|Система автоматически проверит формат страниц, шрифт, нумерацию и структуру.|The system automatically checks page size, fonts, numbering and structure.
+report_description|Ескертулерді беттерімен бірге көріп, PDF немесе JSON есебін жүктеңіз.|Просмотрите замечания с номерами страниц и скачайте отчёт PDF или JSON.|View findings with page numbers and download a PDF or JSON report.
+ready_to_start|Жұмысыңыз дайын ба?|Готовы загрузить работу?|Ready to upload your thesis?
+workspace_subtitle|Барлық жұмысыңыз бен тексеру нәтижелері бір жерде.|Все ваши работы и результаты проверок в одном месте.|Your submissions and review results, together in one place.
+selected_standard|Тексеру талаптары|Требования проверки|Review requirements
+upload_zone|PDF файлын осы жерге апарыңыз|Перетащите PDF сюда|Drop your PDF here
+or_choose|немесе файлды таңдаңыз|или выберите файл|or choose a file
+choose_file|Файл таңдау|Выбрать файл|Choose file
+selected_file|Таңдалған файл|Выбранный файл|Selected file
+no_file_selected|Файл таңдалмаған|Файл не выбран|No file selected
+account_intro|Жұмыстарыңыз бен есептеріңізді жеке кабинетте сақтаңыз.|Храните ваши работы и отчёты в личном кабинете.|Keep your submissions and reports in your personal workspace.
+have_account|Тіркелгіңіз бар ма?|Уже есть аккаунт?|Already have an account?
+new_account|Әлі тіркелмедіңіз бе?|Ещё нет аккаунта?|New to the platform?
+upload_step|Құжат|Документ|Document
+review_step|Тексеру|Проверка|Review
+report_step|Нәтиже|Результат|Results
+preview|Құжатты көру|Просмотр документа|Document preview
+open_pdf|PDF-ті ашу|Открыть PDF|Open PDF
+view_page|Бетке өту|Перейти к странице|Go to page
+preview_hint|Есептегі бет нөмірін басып, PDF құжатында сол бетке өтіңіз.|Нажмите номер страницы в отчёте, чтобы перейти к ней в PDF.|Select a page number in the report to jump to that page in the PDF.
+automatic_label|Автоматты тексеру|Автоматическая проверка|Automated review
+back_to_history|Тарихқа оралу|Вернуться к истории|Back to history
+left_margin|Сол жақ|Слева|Left
+right_margin|Оң жақ|Справа|Right
+top_margin|Жоғары|Сверху|Top
+bottom_margin|Төмен|Снизу|Bottom
+skip_content|Мазмұнға өту|Перейти к содержимому|Skip to content
+navigation|Негізгі мәзір|Основное меню|Main navigation
+show_password|Құпиясөзді көрсету|Показать пароль|Show password
+hide_password|Құпиясөзді жасыру|Скрыть пароль|Hide password
+local_privacy|Түпнұсқа сақталады|Оригинал сохраняется|Original preserved
+footer_description|Магистрлік жұмыстардың рәсімделуін тексеруге арналған цифрлық орта.|Цифровая среда для проверки оформления магистерских работ.|A digital workspace for reviewing master's thesis formatting.
 '''
 
 TEXT = {lang: {} for lang in ("kk", "ru", "en")}
@@ -144,7 +187,8 @@ def strings(lang):
 
 
 def context(request):
-    return {"t": strings(request.LANGUAGE_CODE), "interface_language": request.LANGUAGE_CODE}
+    from .version import VERSION
+    return {"t": strings(request.LANGUAGE_CODE), "interface_language": request.LANGUAGE_CODE, "app_version": VERSION}
 
 
 def finding_text(finding, lang):

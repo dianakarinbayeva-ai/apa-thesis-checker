@@ -10,6 +10,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, KeepTogether
 
 from .i18n import strings, finding_text
+from .version import VERSION
 
 
 def pdf_report(job, lang):
@@ -41,7 +42,7 @@ def pdf_report(job, lang):
     def footer(canvas, document):
         canvas.setFont("NotoSans", 8)
         canvas.setFillColor(colors.HexColor("#667085"))
-        canvas.drawString(42, 24, "APA Thesis Checker · v0.1.0")
+        canvas.drawString(42, 24, f"APA Thesis Checker · v{VERSION}")
         canvas.drawRightString(553, 24, str(document.page))
     doc.build(flow, onFirstPage=footer, onLaterPages=footer)
     return buffer.getvalue()

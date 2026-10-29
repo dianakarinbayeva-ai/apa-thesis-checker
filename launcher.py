@@ -13,6 +13,7 @@ from pathlib import Path
 
 
 def main():
+    from platform_app.version import VERSION
     parser = argparse.ArgumentParser()
     parser.add_argument("--worker", action="store_true")
     parser.add_argument("--no-browser", action="store_true")
@@ -34,7 +35,7 @@ def main():
     url = f"http://127.0.0.1:{args.port}"
     try:
         with urllib.request.urlopen(url + "/health/", timeout=1) as response:
-            if b'"version": "0.1.0"' in response.read():
+            if ('"version": "' + VERSION + '"').encode() in response.read():
                 if not args.no_browser:
                     webbrowser.open(url)
                 print(url, flush=True)

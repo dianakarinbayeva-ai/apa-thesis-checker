@@ -22,3 +22,9 @@ see `platform_app/assets/OFL.txt`. No Microsoft fonts are redistributed.
 The Academy is the source of the academic requirements and visual reference.
 The tool is an independent implementation, not an official certificate or
 an endorsement by the Academy. Links to official materials remain authoritative.
+
+Academy identity assets (logo and background photo) are reproduced unchanged
+from apa.kz at the project owner's explicit request. They remain the property
+of their respective rights holders and are not relicensed under this project's
+AGPL. Exact source URLs and hashes: docs/ACADEMY-BRAND.json. Purplelink is a
+workflow reference only; its logo, code and branding are not included.

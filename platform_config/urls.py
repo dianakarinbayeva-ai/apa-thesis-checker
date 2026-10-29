@@ -11,6 +11,7 @@ urlpatterns = [
     path("source/", views.source, name="source"),
     path("work/<uuid:pk>/", views.detail, name="detail"),
     path("work/<uuid:pk>/status/", views.job_status, name="job_status"),
+    path("work/<uuid:pk>/preview/", views.preview, name="preview"),
     path("work/<uuid:pk>/download/<str:kind>/", views.download, name="download"),
     path("work/<uuid:pk>/delete/", views.delete_work, name="delete_work"),
 ]

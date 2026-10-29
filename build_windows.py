@@ -10,11 +10,13 @@ root = Path(__file__).resolve().parent
 os.chdir(root)
 sys.path.insert(0, str(root))
 from platform_app.source_bundle import source_archive
+from platform_app.version import VERSION
 
 build = root / "build"
 build.mkdir(exist_ok=True)
 (build / "source.zip").write_bytes(source_archive())
 args = [sys.executable, "-m", "PyInstaller", "--noconfirm", "--onedir", "--name", "APA Thesis Checker",
+        "--distpath", str(root / "dist" / VERSION),
         "--collect-all", "django", "--collect-all", "pymupdf", "--collect-all", "reportlab",
         "--hidden-import", "platform_config.settings", "--hidden-import", "platform_config.urls",
         "--hidden-import", "platform_config.wsgi", "--hidden-import", "platform_app.views",
@@ -25,7 +27,7 @@ args = [sys.executable, "-m", "PyInstaller", "--noconfirm", "--onedir", "--name"
         "--add-data", "platform_app/assets;platform_app/assets",
         "--add-data", "build/source.zip;.", "launcher.py"]
 subprocess.run(args, check=True)
-folder = root / "dist" / "APA Thesis Checker"
+folder = root / "dist" / VERSION / "APA Thesis Checker"
 for name in ("LICENSE", "NOTICE.md", "README.ru.md", "README.kk.md", "README.en.md", "start.cmd"):
     shutil.copy2(root / name, folder / name)
 import importlib.metadata
@@ -42,9 +44,9 @@ for distribution in importlib.metadata.distributions():
 python_licence = Path(sys.base_prefix) / 'LICENSE.txt'
 if python_licence.is_file():
     shutil.copy2(python_licence, notices / 'Python-LICENSE.txt')
-archive = root.parent / "apa-thesis-checker-v0.1.0-windows-x64.zip"
+archive = root.parent / f"apa-thesis-checker-v{VERSION}-windows-x64.zip"
 with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zipped:
     for file in folder.rglob("*"):
-        if file.is_file():
+        if file.is_file() and file.relative_to(folder).parts[0] != 'data':
             zipped.write(file, str(Path("APA Thesis Checker") / file.relative_to(folder)))
 print(archive)
