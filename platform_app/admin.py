@@ -26,4 +26,9 @@ class ProfileAdmin(admin.ModelAdmin):
 class SubmissionAdmin(admin.ModelAdmin):
     list_display = ("title", "owner", "status", "created_at")
     list_filter = ("status", "language")
-    readonly_fields = ("id", "result", "profile", "file", "created_at", "started_at", "finished_at")
+    exclude = ("file",)
+    readonly_fields = ("id", "result", "profile", "private_filename", "created_at", "started_at", "finished_at")
+
+    @admin.display(description="PDF")
+    def private_filename(self, obj):
+        return obj.file.name

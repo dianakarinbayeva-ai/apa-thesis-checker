@@ -1,5 +1,7 @@
 # Academic Format Review · English
 
+Full online application: Render Free + Supabase Free. [Deployment, security and free-plan limits](docs/FREE-CLOUD.md).
+
 A trilingual platform for automatically reviewing thesis PDFs against the
 requirements of the Academy of Public Administration under the President of Kazakhstan.
 

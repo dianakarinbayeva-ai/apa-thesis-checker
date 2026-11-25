@@ -120,6 +120,7 @@ too_large|Файл көлемі 30 МБ-тан аспауы керек.|Разм
 too_many_pages|PDF 1–300 беттен тұруы керек.|PDF должен содержать от 1 до 300 страниц.|The PDF must contain 1–300 pages.
 invalid_form|Барлық өрістерді дұрыс толтырыңыз және PDF таңдаңыз.|Заполните все поля корректно и выберите PDF.|Complete every field correctly and select a PDF.
 worker_error|Тексеру аяқталмады. Қайта жүктеп көріңіз немесе әкімшіге хабарласыңыз.|Проверка не завершилась. Повторите загрузку или обратитесь к администратору.|The review did not complete. Try uploading again or contact an administrator.
+storage_unavailable|Жабық файл қоймасы уақытша қолжетімсіз. Кейінірек қайта жүктеңіз.|Закрытое хранилище временно недоступно. Повторите загрузку позже.|Private file storage is temporarily unavailable. Please try uploading later.
 timeout|Тексеру уақыты аяқталды. Құжатты қайта жүктеңіз.|Время проверки истекло. Загрузите документ повторно.|The review timed out. Upload the document again.
 rate_limit|Тым көп әрекет. Бірнеше минуттан кейін қайталаңыз.|Слишком много попыток. Повторите через несколько минут.|Too many attempts. Try again in a few minutes.
 not_found|Бет табылмады немесе сізге қолжетімсіз.|Страница не найдена или недоступна вам.|The page was not found or is unavailable to you.

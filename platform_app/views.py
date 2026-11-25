@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 import re
 import secrets
 import time
@@ -14,7 +15,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.cache import cache
-from django.db import transaction, IntegrityError
+from django.db import transaction, IntegrityError, DatabaseError
 from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -178,9 +179,22 @@ def upload(request):
                 error = "worker_error"
             else:
                 work = Submission(owner=request.user, title=title, language=lang, duration=duration, profile=profile.snapshot())
-                work.file.save(f"{work.id}.pdf", file, save=False)
-                work.save()
-                return redirect("detail", pk=work.pk)
+                try:
+                    work.file.save(f"{work.id}.pdf", file, save=False)
+                except OSError:
+                    error = "storage_unavailable"
+                else:
+                    try:
+                        with transaction.atomic():
+                            work.save()
+                    except DatabaseError:
+                        try:
+                            work.file.delete(save=False)
+                        except OSError:
+                            logging.getLogger(__name__).exception("Private upload cleanup failed: %s", work.pk)
+                        error = "worker_error"
+                    else:
+                        return redirect("detail", pk=work.pk)
     profile = RuleProfile.objects.filter(active=True).first()
     return render(request, "platform_app/upload.html", {"error": strings(request.LANGUAGE_CODE).get(error), "profile": profile})
 

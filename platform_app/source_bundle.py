@@ -3,7 +3,7 @@ import sys
 import zipfile
 from pathlib import Path
 
-TOP_FILES = {"manage.py", "launcher.py", "requirements.txt", "requirements-build.txt", "LICENSE", "NOTICE.md",
+TOP_FILES = {"manage.py", "launcher.py", "cloud_launcher.py", "requirements.txt", "requirements-build.txt", "LICENSE", "NOTICE.md",
              "README.md", "README.ru.md", "README.kk.md", "README.en.md", ".gitignore", "Dockerfile", "compose.yml",
              "Caddyfile", ".dockerignore", "build_windows.py", "start.cmd"}
 TOP_DIRS = {"platform_app", "platform_config", "vendor", "docs", "tests", ".github", "scripts"}

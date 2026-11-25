@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from .checker import DEFAULT_PROFILE, PDFError, check_pdf
 from .models import RuleProfile, Submission
+from .private_storage import pdf_local_path
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,8 @@ def process_one():
     if not claimed:
         return False
     try:
-        result = check_pdf(job.file.path, duration=job.duration, language=job.language, profile=job.profile)
+        with pdf_local_path(job.file) as path:
+            result = check_pdf(path, duration=job.duration, language=job.language, profile=job.profile)
         Submission.objects.filter(pk=job.pk, status="processing").update(result=result, status="done", finished_at=timezone.now())
     except PDFError as exc:
         Submission.objects.filter(pk=job.pk).update(status="failed", error_code=str(exc), finished_at=timezone.now())

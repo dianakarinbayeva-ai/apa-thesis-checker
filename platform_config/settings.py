@@ -3,6 +3,9 @@ import secrets
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+if os.environ.get('APA_CLOUD') == '1':
+    from .cloud import validate_cloud_environment
+    validate_cloud_environment(os.environ)
 DATA_DIR = Path(os.environ.get("APA_DATA_DIR", BASE_DIR / "data")).resolve()
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 secret_file = DATA_DIR / ".secret-key"
@@ -18,6 +21,9 @@ if not SECRET_KEY:
 DEBUG = False
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,[::1]").split(",")
 CSRF_TRUSTED_ORIGINS = [s for s in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if s]
+if os.environ.get('APA_CLOUD') == '1':
+    ALLOWED_HOSTS = (os.environ.get('ALLOWED_HOSTS') or os.environ['RENDER_EXTERNAL_HOSTNAME']).split(',')
+    CSRF_TRUSTED_ORIGINS = ['https://' + host for host in ALLOWED_HOSTS]
 INSTALLED_APPS = [
     "django.contrib.admin", "django.contrib.auth", "django.contrib.contenttypes",
     "django.contrib.sessions", "django.contrib.messages", "django.contrib.staticfiles",
@@ -35,7 +41,10 @@ TEMPLATES = [{"BACKEND": "django.template.backends.django.DjangoTemplates", "DIR
               "django.contrib.auth.context_processors.auth", "django.contrib.messages.context_processors.messages",
               "platform_app.i18n.context"]}}]
 WSGI_APPLICATION = "platform_config.wsgi.application"
-if os.environ.get("POSTGRES_HOST"):
+if os.environ.get("DATABASE_URL"):
+    from .cloud import database_from_url
+    DATABASES = {"default": database_from_url(os.environ["DATABASE_URL"])}
+elif os.environ.get("POSTGRES_HOST"):
     DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql", "NAME": os.environ["POSTGRES_DB"],
         "USER": os.environ["POSTGRES_USER"], "PASSWORD": os.environ["POSTGRES_PASSWORD"],
         "HOST": os.environ["POSTGRES_HOST"], "PORT": os.environ.get("POSTGRES_PORT", "5432")}}
@@ -56,6 +65,11 @@ STATIC_URL = "/static/"
 STATIC_ROOT = DATA_DIR / "staticfiles"
 MEDIA_ROOT = DATA_DIR / "uploads"
 MEDIA_URL = "/private-media/"
+APA_STORAGE_ENDPOINT = os.environ.get("APA_STORAGE_ENDPOINT", "")
+APA_STORAGE_TOKEN = os.environ.get("APA_STORAGE_TOKEN", "")
+if APA_STORAGE_ENDPOINT:
+    STORAGES = {'default': {'BACKEND':'platform_app.private_storage.PrivateCloudStorage'},
+                'staticfiles': {'BACKEND':'django.contrib.staticfiles.storage.StaticFilesStorage'}}
 FILE_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024
 DATA_UPLOAD_MAX_MEMORY_SIZE = 32 * 1024 * 1024
 DATA_UPLOAD_MAX_NUMBER_FILES = 1
@@ -72,4 +86,5 @@ if os.environ.get("APA_HTTPS") == "1":
     CSRF_COOKIE_SECURE = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = True
+    SECURE_REDIRECT_EXEMPT = [r'^health/$']
     SECURE_HSTS_SECONDS = 31536000
