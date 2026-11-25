@@ -20,6 +20,8 @@ The full Python application runs on **Render Free**, with durable **Supabase Fre
 
 Use Python 3.12.14, build `pip install -r requirements.txt`, start `python cloud_launcher.py`, plan **free**, one instance. Render sets `PORT` and `RENDER_EXTERNAL_HOSTNAME`. Set server-only environment variables using the provider's Environment page or authenticated management tools:
 
+The current service was connected through its public repository URL. For this connection method, a GitHub push alone does not redeploy it: select **Manual Deploy → Deploy latest commit** in the Render dashboard after publishing reviewed changes. Alternatively, connect the GitHub provider to enable automatic deployments. See [Render deployment documentation](https://render.com/docs/deploys).
+
 | Variable | Value |
 | --- | --- |
 | APA_CLOUD | `1` |
