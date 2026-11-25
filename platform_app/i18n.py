@@ -2,6 +2,7 @@
 
 ROWS = '''
 brand|Академиялық нормобақылау|Академический нормконтроль|Academic format review
+school_name|Мемлекеттік саясаттың ұлттық мектебі|Национальная школа государственной политики|National School of Public Policy
 academy|Қазақстан Республикасы Президентінің жанындағы Мемлекеттік басқару академиясы|Академия государственного управления при Президенте Республики Казахстан|Academy of Public Administration under the President of the Republic of Kazakhstan
 tagline|Зерттеуіңізге назар аударыңыз. Рәсімдеуді біз тексереміз.|Сосредоточьтесь на исследовании. Оформление проверим мы.|Focus on your research. We will review the formatting.
 dashboard|Жеке кабинет|Личный кабинет|Dashboard

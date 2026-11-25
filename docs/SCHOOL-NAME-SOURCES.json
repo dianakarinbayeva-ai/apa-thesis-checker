@@ -1,0 +1,18 @@
+{
+  "verified": "2026-11-25",
+  "reference": "https://www.apa.kz/",
+  "names": {
+    "kk": {
+      "name": "Мемлекеттік саясаттың ұлттық мектебі",
+      "url": "https://www.apa.kz/mektep-zhane-instituttar/memlekettik-sayasattyn-ulttyk-mektebi/"
+    },
+    "ru": {
+      "name": "Национальная школа государственной политики",
+      "url": "https://www.apa.kz/ru/school-and-institutes/nacionalnaya-shkola-gosudarstvennoj-politiki/"
+    },
+    "en": {
+      "name": "National School of Public Policy",
+      "url": "https://www.apa.kz/en/school-and-institutions/national-school-of-public-policy/"
+    }
+  }
+}
