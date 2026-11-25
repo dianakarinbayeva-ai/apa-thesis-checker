@@ -32,3 +32,7 @@ Reports are preliminary feedback, not official approval.
 Development: [README.md](README.md). Cloud: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 Corresponding application source is available from every page footer.
 AGPL-3.0-or-later; original upstream MIT notices are preserved.
+
+0.3.0: private curator dashboard at `/curator/`, group rosters, personal registration codes and latest-result statistics. Real student rosters live only in private data storage. [Guide](docs/CURATOR.md).
+
+0.3.0: private curator dashboard at `/curator/`, assigned groups, student rosters, personal enrolment codes and latest-result progress. [Curator guide](docs/CURATOR.md). Actual rosters are stored only in private data and excluded from public releases.

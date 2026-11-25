@@ -17,14 +17,17 @@ from django.core.cache import cache
 from django.db import transaction, IntegrityError
 from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST, require_GET
 
 from .checker import MAX_SIZE
 from .i18n import strings, finding_text
 from .jobs import seed_profile
-from .models import RuleProfile, Submission
+from .models import RuleProfile, Submission, StudyGroup, RosterStudent
+from .curator import find_enrollment, curated_submission
 from .reports import pdf_report
+from .result_validation import valid_result
 
 
 def limited(request, action, maximum=20):
@@ -68,15 +71,52 @@ def register(request):
                 if password != request.POST.get("password2"):
                     raise ValidationError("mismatch")
                 with transaction.atomic():
+                    group_id = request.POST.get("study_group", "")
+                    code = request.POST.get("enrollment_code", "")
+                    student = find_enrollment(group_id, code, lock=True) if group_id or code else None
+                    if (group_id or code) and student is None:
+                        raise ValidationError("enrollment")
                     bootstrap = settings.ALLOWED_HOSTS == ["localhost", "127.0.0.1", "[::1]"] and not User.objects.exists()
                     user = User.objects.create_user(username=username, password=password, is_staff=bootstrap, is_superuser=bootstrap)
+                    user.first_name = (student.full_name if student else request.POST.get("full_name", "").strip())[:150]
+                    user.save(update_fields=["first_name"])
+                    if student:
+                        student.user = user
+                        student.save(update_fields=["user"])
                 login(request, user)
                 return redirect("dashboard")
-            except ValidationError:
-                error = "password_error"
+            except ValidationError as exc:
+                error = "enrollment_error" if exc.messages == ["enrollment"] else "password_error"
             except IntegrityError:
                 error = "register_error"
-    return render(request, "platform_app/auth.html", {"mode": "register", "error": strings(request.LANGUAGE_CODE).get(error)})
+    return render(request, "platform_app/auth.html", {"mode": "register", "error": strings(request.LANGUAGE_CODE).get(error),
+                  "study_groups": StudyGroup.objects.all()})
+
+
+@login_required
+def join_group(request):
+    error = ""
+    if RosterStudent.objects.filter(user=request.user).exists():
+        return redirect("dashboard")
+    if request.method == "POST":
+        if limited(request, "enrollment", 12):
+            error = "rate_limit"
+        else:
+            with transaction.atomic():
+                student = find_enrollment(request.POST.get("study_group", ""), request.POST.get("enrollment_code", ""), lock=True)
+                if student is None:
+                    error = "enrollment_error"
+                else:
+                    try:
+                        with transaction.atomic():
+                            student.user = request.user
+                            student.save(update_fields=["user"])
+                    except IntegrityError:
+                        error = "enrollment_error"
+                    else:
+                        return redirect("dashboard")
+    return render(request, "platform_app/join_group.html", {"study_groups": StudyGroup.objects.all(),
+                  "error": strings(request.LANGUAGE_CODE).get(error)})
 
 
 @require_POST
@@ -103,6 +143,7 @@ def dashboard(request):
         return render(request, "platform_app/landing.html")
     works = Submission.objects.filter(owner=request.user)
     return render(request, "platform_app/dashboard.html", dict(works=works[:5], total=works.count(),
+                 roster_student=RosterStudent.objects.select_related("group").filter(user=request.user).first(),
                  completed=works.filter(status="done").count(), pending=works.filter(status__in=["queued", "processing"]).count()))
 
 
@@ -145,27 +186,38 @@ def upload(request):
 
 
 @login_required
-def detail(request, pk):
-    job = get_object_or_404(Submission, pk=pk, owner=request.user)
-    findings = [finding_text(f, request.LANGUAGE_CODE) for f in job.result.get("findings", [])]
+def detail(request, pk, curator_view=False):
+    job = curated_submission(request, pk) if curator_view else get_object_or_404(Submission, pk=pk, owner=request.user)
+    valid = valid_result(job.result, job.profile)
+    result = job.result if valid else {}
+    findings = [finding_text(f, request.LANGUAGE_CODE) for f in result.get("findings", [])]
     t = strings(request.LANGUAGE_CODE)
-    counts = [(s, t[s], job.result.get("counts", {}).get(s, 0)) for s in ("pass", "fail", "uncertain", "na")]
-    return render(request, "platform_app/detail.html", dict(job=job, findings=findings, counts=counts,
+    counts = [(s, t[s], result.get("counts", {}).get(s, 0)) for s in ("pass", "fail", "uncertain", "na")]
+    prefix = "curator_" if curator_view else ""
+    job_urls = {"preview": reverse(prefix+"preview", args=[job.pk]), "status": reverse(prefix+"job_status", args=[job.pk])}
+    job_urls.update({kind: reverse(prefix+"download", args=[job.pk, kind]) for kind in ("pdf", "json", "original")})
+    response = render(request, "platform_app/detail.html", dict(job=job, findings=findings, counts=counts,
+                  job_urls=job_urls, can_delete=not curator_view, curator_view=curator_view,
+                  report_invalid=job.status == "done" and not valid,
+                  return_url=reverse("curator_group", args=[job.owner.student_roster.group_id]) if curator_view else reverse("history"),
+                  return_label=t["curator_dashboard"] if curator_view else t["history"],
                   status_label=t[job.status], error=t.get(job.error_code, t["worker_error"])))
+    response["Cache-Control"] = "private, no-store"
+    return response
 
 
 @login_required
 @require_GET
-def job_status(request, pk):
-    job = get_object_or_404(Submission, pk=pk, owner=request.user)
+def job_status(request, pk, curator_view=False):
+    job = curated_submission(request, pk) if curator_view else get_object_or_404(Submission, pk=pk, owner=request.user)
     response = JsonResponse({"status": job.status})
     response["Cache-Control"] = "no-store"
     return response
 
 
 @login_required
-def preview(request, pk):
-    job = get_object_or_404(Submission, pk=pk, owner=request.user)
+def preview(request, pk, curator_view=False):
+    job = curated_submission(request, pk) if curator_view else get_object_or_404(Submission, pk=pk, owner=request.user)
     response = FileResponse(job.file.open("rb"), content_type="application/pdf", filename="document.pdf")
     response["Content-Disposition"] = 'inline; filename="document.pdf"'
     response["Cache-Control"] = "private, no-store"
@@ -173,12 +225,16 @@ def preview(request, pk):
 
 
 @login_required
-def download(request, pk, kind):
-    job = get_object_or_404(Submission, pk=pk, owner=request.user)
+def download(request, pk, kind, curator_view=False):
+    job = curated_submission(request, pk) if curator_view else get_object_or_404(Submission, pk=pk, owner=request.user)
     if kind == "original":
         response = FileResponse(job.file.open("rb"), content_type="application/pdf", as_attachment=True, filename="original.pdf")
     elif job.status != "done":
         return not_found(request)
+    elif not valid_result(job.result, job.profile):
+        response = render(request, "platform_app/error.html", {"error": strings(request.LANGUAGE_CODE)["invalid_report"]}, status=409)
+        response["Cache-Control"] = "private, no-store"
+        return response
     elif kind == "json":
         result = dict(job.result)
         result["report_language"] = request.LANGUAGE_CODE

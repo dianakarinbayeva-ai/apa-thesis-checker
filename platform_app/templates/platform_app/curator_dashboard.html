@@ -1,0 +1,8 @@
+{% extends 'platform_app/base.html' %}{% block content %}
+<div class="page-heading"><div><span class="eyebrow">{{ t.cur_groups }}</span><h1>{{ t.curator_dashboard }}</h1><p class="muted">{{ t.curator_intro }}</p></div></div>
+{% include 'platform_app/curator_stats.html' with stats=totals %}
+<p class="notice">{{ t.cur_latest_only }}</p>
+<div class="curator-group-grid">{% for item in groups %}<section class="card curator-group-card"><span class="eyebrow">{{ item.group.programme }}</span><h2>{{ t.cur_group }} {{ item.group.group_number }}</h2><p>{{ item.group.programme_code }} · {{ t.programme_name }}</p><p class="muted">{{ item.group.year }} · {% if item.group.intake == 'winter' %}{{ t.winter_intake }}{% else %}{{ t.autumn_intake }}{% endif %}</p>
+{% if item.group.roster_loaded %}<div class="group-progress"><span>{{ t.cur_uploaded }} <strong>{{ item.uploaded }} / {{ item.total }}</strong></span><progress value="{{ item.completion_percent }}" max="100" aria-label="{{ t.cur_uploaded }}">{{ item.completion_percent }}%</progress></div><div class="group-mini-stats"><span>{{ t.cur_remaining }}: <strong>{{ item.remaining }}</strong></span><span>{{ t.cur_passed }}: <strong>{{ item.passed }}</strong></span></div>{% else %}<p class="notice">{{ t.cur_roster_pending }}</p>{% endif %}
+<a class="button" href="{% url 'curator_group' item.group.pk %}">{{ item.group.programme }} · {{ t.cur_group }} {{ item.group.group_number }}</a></section>{% empty %}<p class="card">{{ t.cur_no_groups }}</p>{% endfor %}</div>
+{% endblock %}

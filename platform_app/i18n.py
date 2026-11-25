@@ -1,6 +1,44 @@
 """All student-facing strings. Report keys remain stable across languages."""
 
 ROWS = '''
+invalid_report|Есеп деректері толық емес немесе оқылмайды. Сәйкестік расталмады. Құжатты қайта жүктеп тексеріңіз.|Данные отчёта неполные или повреждены. Соответствие не подтверждено. Загрузите документ для повторной проверки.|The report data is incomplete or unreadable. Compliance is not confirmed. Upload the document for a new review.
+cur_registered_no_upload|Тіркелген, жүктемеген|Зарегистрированы, без PDF|Registered, no PDF
+curator_dashboard|Куратор кабинеті|Кабинет куратора|Curator dashboard
+curator_intro|Топтар бойынша жүктеу мен соңғы тексеру нәтижелерін бақылау.|Контроль загрузок и последних результатов по группам.|Monitor uploads and latest review results by group.
+curator_forbidden|Бұл бет тек тағайындалған кураторға қолжетімді.|Эта страница доступна только назначенному куратору.|This page is available only to an assigned curator.
+cur_total|Барлық магистранттар|Всего магистрантов|Total students
+cur_registered|Тіркелді|Зарегистрированы|Registered
+cur_uploaded|PDF жүктеді|Загрузили PDF|PDF uploaded
+cur_remaining|Жүктеуі қалған|Осталось загрузить|Awaiting upload
+cur_unregistered|Тіркелмеген|Не зарегистрирован|Not registered
+cur_not_uploaded|PDF жүктемеген|PDF не загружен|No PDF uploaded
+cur_passed|Талаптарға сай өтті|Соответствует требованиям|Passed requirements
+cur_revision|Түзету қажет|Нужны исправления|Revision required
+cur_inconclusive|Деректер жеткіліксіз|Недостаточно данных|Insufficient evidence
+cur_processing|Тексерілуде|Проверяется|Processing
+cur_failed|Тексеру қатесі|Ошибка проверки|Review failed
+cur_latest_only|Әр магистранттың соңғы жүктеген құжаты есепке алынады. Тексерудің аяқталуы сәйкестікті білдірмейді.|Учитывается последний документ каждого магистранта. Завершённая проверка не означает соответствие.|Only each student's latest upload is counted. A completed review does not imply a pass.
+cur_roster_pending|Топ тізімі әлі енгізілмеген. Магистранттар саны анықталмаған.|Список группы ещё не добавлен. Число магистрантов неизвестно.|The group roster has not been added. Student numbers are unknown.
+cur_groups|Оқу топтары|Учебные группы|Study groups
+cur_group|Топ|Группа|Group
+cur_group_open|Топты ашу|Открыть группу|Open group
+cur_no_groups|Әзірге тағайындалған топтар жоқ.|Пока нет назначенных групп.|No groups have been assigned yet.
+cur_full_name|Аты-жөні|ФИО|Full name
+cur_search|Аты-жөні бойынша іздеу|Поиск по ФИО|Search by name
+cur_filter|Сүзгілеу|Применить фильтр|Apply filter
+cur_last_upload|Соңғы жүктеу|Последняя загрузка|Latest upload
+cur_enrollment_code|Тіркелу коды|Код регистрации|Registration code
+cur_code_hint|Тіркелу кодын тек тиісті магистрантқа беріңіз. Код бір рет қолданылады. Тізім мен кодтар басқа студенттерге ашылмайды.|Передайте код только соответствующему магистранту. Он используется один раз. Список и коды скрыты от других студентов.|Share each code only with its student. Codes can be used once. Other students cannot see the roster or codes.
+cur_no_rows|Бұл сүзгі бойынша магистранттар табылмады.|По этому фильтру магистранты не найдены.|No students match this filter.
+programme_name|Мемлекеттік басқару|Государственное управление|Public Administration
+winter_intake|Қысқы қабылдау|Зимний приём|Winter intake
+autumn_intake|Күзгі қабылдау|Осенний приём|Autumn intake
+study_group|Оқу тобы|Учебная группа|Study group
+no_study_group|Топсыз жеке тіркелу|Регистрация без группы|Register without a group
+enrollment_hint|Топқа қосылу үшін куратор берген жеке кодты енгізіңіз.|Для присоединения к группе введите личный код от куратора.|To join a group, enter the personal code provided by your curator.
+enrollment_error|Топ немесе тіркелу коды қате, не код бұрын қолданылған.|Группа или код неверны либо код уже использован.|The group or code is invalid, or the code has already been used.
+join_group|Топқа қосылу|Присоединиться к группе|Join a group
+enrolled_group|Сіздің тобыңыз|Ваша группа|Your group
 brand|Академиялық нормобақылау|Академический нормконтроль|Academic format review
 school_name|Мемлекеттік саясаттың ұлттық мектебі|Национальная школа государственной политики|National School of Public Policy
 academy|Қазақстан Республикасы Президентінің жанындағы Мемлекеттік басқару академиясы|Академия государственного управления при Президенте Республики Казахстан|Academy of Public Administration under the President of the Republic of Kazakhstan
@@ -189,7 +227,9 @@ def strings(lang):
 
 def context(request):
     from .version import VERSION
-    return {"t": strings(request.LANGUAGE_CODE), "interface_language": request.LANGUAGE_CODE, "app_version": VERSION}
+    from .curator import can_curate
+    return {"t": strings(request.LANGUAGE_CODE), "interface_language": request.LANGUAGE_CODE,
+            "app_version": VERSION, "user_can_curate": can_curate(request.user)}
 
 
 def finding_text(finding, lang):

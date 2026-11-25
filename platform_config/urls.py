@@ -1,11 +1,19 @@
 from django.contrib import admin
 from django.urls import path
 from platform_app import views
+from platform_app import curator
 
 urlpatterns = [
     path("admin/", admin.site.urls), path("", views.dashboard, name="dashboard"),
     path("login/", views.login_view, name="login"), path("register/", views.register, name="register"),
     path("logout/", views.logout_view, name="logout"), path("language/", views.language, name="language"),
+    path("join-group/", views.join_group, name="join_group"),
+    path("curator/", curator.dashboard, name="curator_dashboard"),
+    path("curator/group/<int:pk>/", curator.group_detail, name="curator_group"),
+    path("curator/work/<uuid:pk>/", views.detail, {"curator_view": True}, name="curator_detail"),
+    path("curator/work/<uuid:pk>/status/", views.job_status, {"curator_view": True}, name="curator_job_status"),
+    path("curator/work/<uuid:pk>/preview/", views.preview, {"curator_view": True}, name="curator_preview"),
+    path("curator/work/<uuid:pk>/download/<str:kind>/", views.download, {"curator_view": True}, name="curator_download"),
     path("upload/", views.upload, name="upload"), path("history/", views.history, name="history"),
     path("guide/", views.guide, name="guide"), path("health/", views.health, name="health"),
     path("source/", views.source, name="source"),

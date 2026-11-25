@@ -10,6 +10,7 @@
 <div class="academy-nav"><nav class="wrap nav-inner" aria-label="{{ t.navigation }}"><a class="nav-product" href="{% url 'dashboard' %}">{{ t.brand }}</a><div class="nav-links">
 <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>{% if user.is_authenticated %}{{ t.dashboard }}{% else %}{{ t.home }}{% endif %}</a>
 {% if user.is_authenticated %}<a href="{% url 'upload' %}" {% if request.resolver_match.url_name == 'upload' %}aria-current="page"{% endif %}>{{ t.new_check }}</a><a href="{% url 'history' %}" {% if request.resolver_match.url_name == 'history' %}aria-current="page"{% endif %}>{{ t.history }}</a>{% endif %}
+{% if user_can_curate %}<a href="{% url 'curator_dashboard' %}">{{ t.curator_dashboard }}</a>{% endif %}
 <a href="{% url 'guide' %}" {% if request.resolver_match.url_name == 'guide' %}aria-current="page"{% endif %}>{{ t.guide }}</a>
 {% if user.is_authenticated %}<form action="{% url 'logout' %}" method="post">{% csrf_token %}<button class="nav-button">{{ t.logout }}</button></form>{% else %}<a class="nav-login" href="{% url 'login' %}"><svg class="icon"><use href="#i-user"/></svg>{{ t.login }}</a>{% endif %}</div></nav></div></header>
 <main id="main" class="{% block main_class %}wrap app-main{% endblock %}">{% block content %}{% endblock %}</main>

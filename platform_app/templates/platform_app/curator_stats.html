@@ -1,0 +1,14 @@
+<div class="curator-metrics">
+<article class="card"><span>{{ t.cur_total }}</span><strong>{{ stats.total|default_if_none:'—' }}</strong></article>
+<article class="card"><span>{{ t.cur_registered }}</span><strong>{{ stats.registered|default_if_none:'—' }}</strong></article>
+<article class="card"><span>{{ t.cur_unregistered }}</span><strong>{{ stats.unregistered|default_if_none:'—' }}</strong></article>
+<article class="card"><span>{{ t.cur_uploaded }}</span><strong>{{ stats.uploaded|default_if_none:'—' }}</strong></article>
+<article class="card"><span>{{ t.cur_registered_no_upload }}</span><strong>{{ stats.not_uploaded|default_if_none:'—' }}</strong></article>
+<article class="card"><span>{{ t.cur_remaining }}</span><strong>{{ stats.remaining|default_if_none:'—' }}</strong></article>
+</div><div class="curator-outcomes">
+<article class="card outcome passed"><span>{{ t.cur_passed }}</span><strong>{{ stats.passed|default_if_none:'—' }}</strong></article>
+<article class="card outcome revision"><span>{{ t.cur_revision }}</span><strong>{{ stats.revision|default_if_none:'—' }}</strong></article>
+<article class="card outcome inconclusive"><span>{{ t.cur_inconclusive }}</span><strong>{{ stats.inconclusive|default_if_none:'—' }}</strong></article>
+<article class="card outcome"><span>{{ t.cur_processing }}</span><strong>{{ stats.processing|default_if_none:'—' }}</strong></article>
+<article class="card outcome failed"><span>{{ t.cur_failed }}</span><strong>{{ stats.failed|default_if_none:'—' }}</strong></article>
+</div>

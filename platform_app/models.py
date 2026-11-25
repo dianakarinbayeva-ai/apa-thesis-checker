@@ -2,6 +2,45 @@ import uuid
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from django.utils.crypto import salted_hmac
+
+
+class StudyGroup(models.Model):
+    code = models.SlugField(unique=True)
+    programme = models.CharField(max_length=160)
+    programme_code = models.CharField(max_length=24)
+    group_number = models.PositiveSmallIntegerField()
+    intake = models.CharField(max_length=12, default="winter", choices=[("winter", "winter"), ("autumn", "autumn")])
+    year = models.PositiveSmallIntegerField(default=2025)
+    roster_loaded = models.BooleanField(default=False)
+    curators = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name="curated_study_groups")
+
+    class Meta:
+        ordering = ["programme", "group_number"]
+
+    def __str__(self):
+        return f"{self.programme} · {self.group_number}"
+
+
+class RosterStudent(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    group = models.ForeignKey(StudyGroup, on_delete=models.PROTECT, related_name="students")
+    position = models.PositiveSmallIntegerField()
+    full_name = models.CharField(max_length=180)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, null=True, blank=True,
+                               on_delete=models.SET_NULL, related_name="student_roster")
+
+    class Meta:
+        ordering = ["position"]
+        constraints = [models.UniqueConstraint(fields=["group", "position"], name="unique_roster_position")]
+
+    @property
+    def enrollment_code(self):
+        signature = salted_hmac("apa-student-enrolment", str(self.pk)).hexdigest()[:16].upper()
+        return f"{self.pk.hex[:8].upper()}-{signature}"
+
+    def __str__(self):
+        return self.full_name
 
 
 class RuleProfile(models.Model):
