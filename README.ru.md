@@ -2,6 +2,8 @@
 
 Полная интернет-версия: Render Free + Supabase Free. [Размещение, безопасность и ограничения бесплатных планов](docs/FREE-CLOUD.md).
 
+**Открыть платформу:** [apa-thesis-checker.onrender.com](https://apa-thesis-checker.onrender.com/). [Кабинет куратора](https://apa-thesis-checker.onrender.com/curator/) доступен после входа.
+
 Платформа для проверки PDF магистерских работ по требованиям Академии
 государственного управления при Президенте Республики Казахстан.
 

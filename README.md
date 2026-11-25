@@ -2,6 +2,10 @@
 
 [Қазақша](README.kk.md) · [Русский](README.ru.md) · [English](README.en.md)
 
+**Платформа / Платформа / Platform:** [https://apa-thesis-checker.onrender.com](https://apa-thesis-checker.onrender.com/)
+
+Render Free + Supabase Free: [инструкции и ограничения / нұсқаулық пен шектеулер / deployment and limits](docs/FREE-CLOUD.md).
+
 Трёхъязычная платформа автоматической проверки PDF магистерских работ по
 требованиям Академии государственного управления при Президенте Республики
 Казахстан. Личные кабинеты, история, отчёты PDF/JSON и готовая Windows-сборка.

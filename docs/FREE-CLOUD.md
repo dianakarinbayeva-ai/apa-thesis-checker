@@ -1,5 +1,7 @@
 # Free cloud deployment / Тегін хостинг / Бесплатный хостинг
 
+**Live URL:** [apa-thesis-checker.onrender.com](https://apa-thesis-checker.onrender.com/). **Curator:** [/curator/](https://apa-thesis-checker.onrender.com/curator/), after signing in.
+
 The full Python application runs on **Render Free**, with durable **Supabase Free** PostgreSQL and private PDF storage. The Windows ZIP continues to work independently with SQLite and local files.
 
 Толық Python платформасы **Render Free** серверінде, деректері **Supabase Free** жабық базасы мен PDF қоймасында сақталады. Windows нұсқасы SQLite және жергілікті файлдармен бөлек жұмыс істейді.
