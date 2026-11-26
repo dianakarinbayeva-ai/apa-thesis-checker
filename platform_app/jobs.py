@@ -9,6 +9,9 @@ from django.utils import timezone
 from .checker import DEFAULT_PROFILE, PDFError, check_pdf
 from .models import RuleProfile, Submission
 from .private_storage import pdf_local_path
+from .revisions import previous_for
+from .comparison import compare_results
+from .result_validation import valid_result
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +34,15 @@ def process_one():
     if not claimed:
         return False
     try:
+        previous = previous_for(job)
+        if previous and not valid_result(previous.result, previous.profile):
+            previous = None
+        prior_findings = previous.result.get('findings', []) if previous else None
         with pdf_local_path(job.file) as path:
-            result = check_pdf(path, duration=job.duration, language=job.language, profile=job.profile)
+            result = check_pdf(path, duration=job.duration, language=job.language, profile=job.profile,
+                previous_findings=prior_findings)
+        if previous:
+            result['comparison'] = compare_results(previous.result, result)
         Submission.objects.filter(pk=job.pk, status="processing").update(result=result, status="done", finished_at=timezone.now())
     except PDFError as exc:
         Submission.objects.filter(pk=job.pk).update(status="failed", error_code=str(exc), finished_at=timezone.now())

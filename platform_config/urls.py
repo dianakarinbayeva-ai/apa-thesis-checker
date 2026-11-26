@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from platform_app import views
 from platform_app import curator
+from platform_app import review_viewer
 
 urlpatterns = [
     path("admin/", admin.site.urls), path("", views.dashboard, name="dashboard"),
@@ -13,6 +14,8 @@ urlpatterns = [
     path("curator/work/<uuid:pk>/", views.detail, {"curator_view": True}, name="curator_detail"),
     path("curator/work/<uuid:pk>/status/", views.job_status, {"curator_view": True}, name="curator_job_status"),
     path("curator/work/<uuid:pk>/preview/", views.preview, {"curator_view": True}, name="curator_preview"),
+    path("curator/work/<uuid:pk>/viewer/", review_viewer.viewer, {"curator_view": True}, name="curator_viewer"),
+    path("curator/work/<uuid:pk>/page-image/", review_viewer.page_image, {"curator_view": True}, name="curator_page_image"),
     path("curator/work/<uuid:pk>/download/<str:kind>/", views.download, {"curator_view": True}, name="curator_download"),
     path("upload/", views.upload, name="upload"), path("history/", views.history, name="history"),
     path("guide/", views.guide, name="guide"), path("health/", views.health, name="health"),
@@ -20,6 +23,8 @@ urlpatterns = [
     path("work/<uuid:pk>/", views.detail, name="detail"),
     path("work/<uuid:pk>/status/", views.job_status, name="job_status"),
     path("work/<uuid:pk>/preview/", views.preview, name="preview"),
+    path("work/<uuid:pk>/viewer/", review_viewer.viewer, name="viewer"),
+    path("work/<uuid:pk>/page-image/", review_viewer.page_image, name="page_image"),
     path("work/<uuid:pk>/download/<str:kind>/", views.download, name="download"),
     path("work/<uuid:pk>/delete/", views.delete_work, name="delete_work"),
 ]

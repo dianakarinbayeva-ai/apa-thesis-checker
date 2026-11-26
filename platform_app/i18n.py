@@ -1,6 +1,30 @@
 """All student-facing strings. Report keys remain stable across languages."""
 
 ROWS = '''
+yellow_errors|Қате жолдар сары түспен белгіленген|Строки с ошибками выделены жёлтым|Error lines are highlighted in yellow
+loading_page|Бет ашылуда…|Страница загружается…|Loading page…
+no_line_location|Бұл бетте белгіленетін қате жол табылмады. Бетке не бүкіл құжатқа қатысты ескертуді есептен қараңыз.|На этой странице нет строки для выделения. Замечание к странице или документу смотрите в отчёте.|No error line can be marked on this page. See the report for page-level or document-wide findings.
+invalid_page|Бет немесе ескерту нөмірі дұрыс емес.|Неверный номер страницы или замечания.|The page or finding number is invalid.
+viewer_busy|Бет дайындалуда. Бірнеше секундтан кейін қайталаңыз.|Страница подготавливается. Повторите через несколько секунд.|A page is being prepared. Please retry in a few seconds.
+viewer_unavailable|Бетті ашу мүмкін болмады. Қайта ашып көріңіз.|Не удалось открыть страницу. Попробуйте ещё раз.|The page could not be opened. Please retry.
+original_changed|PDF осы есептегі түпнұсқамен сәйкес емес. Қайта жүктеп тексеріңіз.|PDF отличается от оригинала этого отчёта. Загрузите документ для новой проверки.|This PDF differs from the report's original. Upload it for a new review.
+previous_page|Алдыңғы бет|Предыдущая страница|Previous page
+next_page|Келесі бет|Следующая страница|Next page
+go_page|Ашу|Открыть|Go
+zoom|Масштаб|Масштаб|Zoom
+retry_page|Қайта ашу|Повторить|Retry
+upload_revision|Түзетілген нұсқаны жүктеу|Загрузить исправленную версию|Upload corrected version
+revision_of|Алдыңғы нұсқа|Предыдущая версия|Previous version
+revision_unavailable|Салыстыру үшін алдыңғы тексеру аяқталған болуы керек.|Для сравнения предыдущая проверка должна быть завершена.|The previous review must be complete before comparison.
+revision_hint|Жаңа PDF тексерілген соң алдыңғы нұсқамен автоматты салыстырылады. Түпнұсқалар тарихта сақталады.|Новый PDF после проверки автоматически сравнивается с предыдущей версией. Оригиналы сохраняются в истории.|After review, the new PDF is compared automatically with the previous version. Originals remain in history.
+comparison_title|Түзетулерді салыстыру|Сравнение исправлений|Revision comparison
+comparison_fixed|Түзетілді|Исправлено|Corrected
+comparison_remaining|Қалды|Осталось|Remaining
+comparison_new|Жаңа қателер|Новые ошибки|New errors
+comparison_unverified|Өзгеріс расталмады|Изменение не подтверждено|Change not confirmed
+comparison_incompatible|Нұсқалар бірдей талаптармен тексерілмеген немесе салыстыруға деректер жеткіліксіз.|Версии проверены по разным условиям либо данных для сравнения недостаточно.|The versions use different review settings or have insufficient comparison evidence.
+comparison_hint|Мәтіннің жоғалуы немесе өлшемнің анықталмауы автоматты түрде түзетілді деп саналмайды.|Исчезновение текста или неопределённое измерение не считается подтверждённым исправлением.|Disappearing text or an uncertain measurement is not treated as a confirmed correction.
+correct_example|Дұрыс рәсімдеу үлгісі|Пример правильного оформления|Correct formatting example
 invalid_report|Есеп деректері толық емес немесе оқылмайды. Сәйкестік расталмады. Құжатты қайта жүктеп тексеріңіз.|Данные отчёта неполные или повреждены. Соответствие не подтверждено. Загрузите документ для повторной проверки.|The report data is incomplete or unreadable. Compliance is not confirmed. Upload the document for a new review.
 cur_registered_no_upload|Тіркелген, жүктемеген|Зарегистрированы, без PDF|Registered, no PDF
 curator_dashboard|Куратор кабинеті|Кабинет куратора|Curator dashboard
@@ -235,7 +259,7 @@ def context(request):
             "app_version": VERSION, "user_can_curate": can_curate(request.user)}
 
 
-def finding_text(finding, lang):
+def finding_text(finding, lang, profile=None, duration='1'):
     t = strings(lang)
     result = dict(finding)
     result.update(title=t[finding["rule_id"]], status_label=t[finding["status"]],
@@ -246,4 +270,10 @@ def finding_text(finding, lang):
         result["evidence"] = t["section_" + result["evidence"]]
     if result["evidence"].startswith("Raster illustrations:"):
         result["evidence"] = t["image_count"] + ": " + result["evidence"].split(":", 1)[1].strip()
+    from .guidance import guidance_for
+    from .checker import DEFAULT_PROFILE
+    guidance = guidance_for(finding, profile or DEFAULT_PROFILE, duration, lang)
+    result.update(guidance)
+    if finding['status'] in ('pass','na'):
+        result['recommendation'] = t['no_changes']
     return result

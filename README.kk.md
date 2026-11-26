@@ -1,5 +1,7 @@
 # Академиялық нормобақылау · Қазақша
 
+0.4.0: қате жолдар сары түспен белгіленеді; бет нөмірін басып дәл сол бетке өтіңіз. «Түзетілген нұсқаны жүктеу» арқылы түзетулер автоматты салыстырылады. [Нұсқаулық](docs/HIGHLIGHTS-AND-REVISIONS.md).
+
 Интернетке арналған толық нұсқа: Render Free + Supabase Free. [Орналастыру, қауіпсіздік және тегін жоспар шектеулері](docs/FREE-CLOUD.md).
 
 **Платформаны ашу:** [apa-thesis-checker.onrender.com](https://apa-thesis-checker.onrender.com/). [Куратор кабинеті](https://apa-thesis-checker.onrender.com/curator/) — аккаунтпен кіргеннен кейін.

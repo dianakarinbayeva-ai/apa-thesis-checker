@@ -1,5 +1,7 @@
 # Academic Format Review · English
 
+0.4.0 adds yellow error-line highlights, reliable page links and automatic corrected-version comparison. [Usage and limits](docs/HIGHLIGHTS-AND-REVISIONS.md).
+
 Full online application: Render Free + Supabase Free. [Deployment, security and free-plan limits](docs/FREE-CLOUD.md).
 
 **Open the platform:** [apa-thesis-checker.onrender.com](https://apa-thesis-checker.onrender.com/). The [curator dashboard](https://apa-thesis-checker.onrender.com/curator/) requires login.

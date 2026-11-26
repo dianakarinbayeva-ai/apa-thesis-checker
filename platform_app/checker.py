@@ -12,6 +12,8 @@ from pathlib import Path
 
 import pymupdf as fitz
 
+from .evidence import MAX_FINDINGS, item_locations, validated_locations
+
 SOURCE = "https://www.apa.kz/wp-content/uploads/2024/09/Приложение-1-Требования-к-оформлению.docx"
 DEFAULT_PROFILE = dict(code="apa-2024", name="APA 2024 · № 586", source_url=SOURCE,
                        version="2024-09-13", min_pages_one=40, min_pages_long=60,
@@ -74,9 +76,12 @@ def parse_pdf_pages(path):
                         lines.append(dict(text=text, bbox=list(line["bbox"])))
                     for span in line["spans"]:
                         if span["text"].strip():
-                            spans.append({key: span[key] for key in ("text", "font", "size", "color", "flags", "bbox")})
+                            item = {key: span[key] for key in ("text", "font", "size", "color", "flags", "bbox")}
+                            item['line_text'], item['line_bbox'] = text, list(line['bbox'])
+                            spans.append(item)
             text = page.get_text("text")
-            pages.append(dict(page_no=idx + 1, width_pt=page.rect.width, height_pt=page.rect.height,
+            unrotated = page.rect * page.derotation_matrix
+            pages.append(dict(page_no=idx + 1, width_pt=unrotated.width, height_pt=unrotated.height,
                               text=text, lines=lines, spans=spans, images=len(page.get_image_info())))
         readable = sum(len(p["text"].strip()) >= 20 for p in pages)
         if not readable or readable / len(pages) < 0.5:
@@ -89,17 +94,44 @@ def heading_pages(pages, key):
     return [(p, line) for p in pages for line in p["lines"] if pattern.fullmatch(normalize(line["text"]))]
 
 
-def check_pdf(path, *, duration="1", language="kk", profile=None):
+def check_pdf(path, *, duration="1", language="kk", profile=None, previous_findings=None):
     profile = profile or DEFAULT_PROFILE.copy()
     pages = parse_pdf_pages(path)
     findings = []
     registry = {rid: (clause, method) for rid, clause, method in REGISTRY}
+    checked = {rid: set() for rid in registry}
+    inspected = {rid: [] for rid in registry}
+    per_rule = Counter()
+    truncation = dict(findings=0, locations=0)
 
-    def add(rid, status, page=None, evidence="", message="observed"):
+    def inspect(rid, text, *, remember=True):
+        normalized = normalize(text)
+        if normalized:
+            checked[rid].add(hashlib.sha256(normalized.encode('utf-8')).hexdigest())
+            if remember:
+                inspected[rid].append(text)
+
+    def add(rid, status, page=None, evidence="", message="observed", *, item=None, locations=None):
         clause, method = registry[rid]
-        findings.append(dict(rule_id=rid, status=status, page=page, evidence=str(evidence)[:700],
-                             message=message, clause=clause, method=method,
-                             source_url=profile["source_url"]))
+        finding = dict(rule_id=rid, status=status, page=page, evidence=str(evidence)[:700],
+                       message=message, clause=clause, method=method, source_url=profile["source_url"])
+        if item:
+            finding['anchor'] = item.get('line_text', item['text'])
+            inspect(rid, finding['anchor'], remember=rid not in ('R_FONT', 'R_COLOR', 'R_MARGIN'))
+            locations = [dict(page=page, bbox=item.get('line_bbox', item.get('bbox')),
+                              text=item.get('line_text', item['text']))]
+        if locations is not None:
+            safe, capped = validated_locations(locations)
+            if safe:
+                finding['locations'] = safe
+            truncation['locations'] += int(capped)
+        # Reserve space for every rule, even when a large document has thousands
+        # of local failures. Truncation is explicit and never means compliance.
+        if per_rule[rid] >= MAX_FINDINGS // len(registry):
+            truncation['findings'] += 1
+            return
+        findings.append(finding)
+        per_rule[rid] += 1
 
     bad_size = [p for p in pages if abs(min(p["width_pt"], p["height_pt"]) / MM - 210) > 1
                 or abs(max(p["width_pt"], p["height_pt"]) / MM - 297) > 1]
@@ -126,12 +158,28 @@ def check_pdf(path, *, duration="1", language="kk", profile=None):
     first_body = intro[0][0]["page_no"] if intro else 2
     last_body = refs[0][0]["page_no"] if refs else body_pages
     candidates = []
+    section_texts = {normalize(line['text']) for key in ALIASES for _, line in heading_pages(pages, key)}
     for p in pages:
         if not first_body <= p["page_no"] <= last_body:
             continue
+        inspected_lines = set()
         for s in p["spans"]:
-            if len(s["text"].strip()) >= 35 and 30 < s["bbox"][1] < p["height_pt"] - 35:
+            text = s['text'].strip()
+            line_text = s.get('line_text', text)
+            nearby = 20 <= len(text) < 35 and any(other is not s and len(other['text'].strip()) >= 20
+                         and abs(other['bbox'][0] - s['bbox'][0]) < 15
+                         and 0 < abs(other['bbox'][1] - s['bbox'][1]) < 36 for other in p['spans'])
+            is_caption = re.match(r'^(?:рисунок|рис\.|сурет|figure|fig\.|таблица|кесте|table)\s*\d', line_text, re.I)
+            body_text = len(line_text) >= 35 or nearby
+            if (body_text and not s['flags'] & 1 and normalize(line_text) not in section_texts
+                    and not is_caption and 30 < s['bbox'][1] < p['height_pt'] - 35
+                    and item_locations(p, [s])[0]):
                 candidates.append((p, s))
+                line_key = tuple(s.get('line_bbox', s['bbox']))
+                if line_key not in inspected_lines:
+                    inspected_lines.add(line_key)
+                    for rid in ('R_FONT', 'R_COLOR', 'R_MARGIN'):
+                        inspect(rid, line_text)
     if not candidates:
         add("R_FONT", "uncertain", message="no_evidence")
         add("R_COLOR", "uncertain", message="no_evidence")
@@ -147,15 +195,25 @@ def check_pdf(path, *, duration="1", language="kk", profile=None):
         if confidence < 0.5:
             status = "uncertain"
         sample = next((p, s) for p, s in candidates if round(s["size"], 1) == dominant[1])
-        add("R_FONT", status, sample[0]["page_no"],
-            f"{dominant[0]}, {dominant[1]} pt; ≥50%: {confidence:.0%}; Times New Roman {profile['font_size']} pt")
+        if status != 'fail':
+            add("R_FONT", status, sample[0]["page_no"],
+                f"{dominant[0]}, {dominant[1]} pt; ≥50%: {confidence:.0%}; Times New Roman {profile['font_size']} pt",
+                item=sample[1])
+        wrong_fonts = []
+        for p, s in candidates:
+            font = re.sub(r'^[A-Z]{6}\+', '', s['font']).lower().replace(' ', '').replace('-', '')
+            if not any(f in font for f in ('timesnewroman', 'timesroman')) or abs(s['size'] - profile['font_size']) > .5:
+                wrong_fonts.append((p, s))
+        for p, s in wrong_fonts:
+            add('R_FONT', 'fail', p['page_no'],
+                f"{s['text']}; {s['font']} {s['size']:.1f} pt; Times New Roman {profile['font_size']} pt", item=s)
         # A dominant font check does not establish that every body span complies.
-        if status == "pass" and len(weights) > 1:
+        if status == "pass" and len(weights) > 1 and not wrong_fonts:
             add("R_FONT", "uncertain", evidence="; ".join(f"{f} {size} pt" for f, size in weights if (f, size) != dominant)[:500])
         colored = [(p, s) for p, s in candidates if s["color"] != 0]
         if colored:
-            p, s = colored[0]
-            add("R_COLOR", "fail", p["page_no"], s["text"][:180] + f"; #{s['color']:06x}")
+            for p, s in colored:
+                add("R_COLOR", "fail", p["page_no"], s["text"][:180] + f"; #{s['color']:06x}", item=s)
         else:
             add("R_COLOR", "pass", evidence="#000000")
 
@@ -171,8 +229,8 @@ def check_pdf(path, *, duration="1", language="kk", profile=None):
             y0 / MM < profile["margin_top"] - 2 or
             (p["height_pt"] - y1) / MM < profile["margin_bottom"] - 2):
             intrusions.append((p, s))
-    for p, s in intrusions[:20]:
-        add("R_MARGIN", "fail", p["page_no"], s["text"][:160])
+    for p, s in intrusions:
+        add("R_MARGIN", "fail", p["page_no"], s["text"][:160], item=s)
     if not intrusions:
         if margins:
             measured = [min(row[i] for row in margins) for i in range(4)]
@@ -184,16 +242,19 @@ def check_pdf(path, *, duration="1", language="kk", profile=None):
             add("R_MARGIN", "uncertain", message="no_evidence")
 
     numbers = []
+    number_lines = {}
     for p in pages:
         footer = [line for line in p["lines"] if line["bbox"][1] > p["height_pt"] * .88
                   and re.fullmatch(r"\d{1,3}", line["text"].strip())]
         centered = [line for line in footer if abs((line["bbox"][0] + line["bbox"][2]) / 2 - p["width_pt"] / 2) < 8 * MM]
         if centered:
             numbers.append((p["page_no"], int(centered[0]["text"])))
+            number_lines[p['page_no']] = centered[0]
+            inspect('R_NUMBER', centered[0]['text'])
     bad_numbers = [(physical, visible) for physical, visible in numbers if physical == 1 or physical != visible]
     if bad_numbers:
-        for physical, visible in bad_numbers[:20]:
-            add("R_NUMBER", "fail", physical, str(visible), "number_order")
+        for physical, visible in bad_numbers:
+            add("R_NUMBER", "fail", physical, str(visible), "number_order", item=number_lines[physical])
     elif len(numbers) == len(pages) - 1 and all(p != 1 for p, _ in numbers):
         add("R_NUMBER", "pass", message="number_order")
     else:
@@ -204,7 +265,7 @@ def check_pdf(path, *, duration="1", language="kk", profile=None):
         matches = heading_pages(pages, key)
         section_locations[key] = matches[0][0]["page_no"] if matches else None
         add("R_STRUCTURE", "pass" if matches else "fail", section_locations[key], key,
-            "observed" if matches else "no_evidence")
+            "observed" if matches else "no_evidence", item=matches[0][1] if matches else None)
     located = [p for p in section_locations.values() if p]
     if located != sorted(located):
         add("R_STRUCTURE", "uncertain", evidence=str(section_locations), message="not_measurable")
@@ -212,35 +273,51 @@ def check_pdf(path, *, duration="1", language="kk", profile=None):
         matches = heading_pages(pages, key)
         for p, line in matches[:1]:
             bold = any(s["flags"] & 16 for s in p["spans"] if normalize(s["text"]) == normalize(line["text"]))
-            add("R_HEADING", "pass" if bold else "uncertain", p["page_no"], line["text"])
+            add("R_HEADING", "pass" if bold else "uncertain", p["page_no"], line["text"], item=line)
             body_lines = [item for item in p['lines'] if item['bbox'][1] > 30]
             if body_lines and normalize(body_lines[0]['text']) != normalize(line['text']):
-                add("R_HEADING", "fail", p['page_no'], line['text'])
+                add("R_HEADING", "fail", p['page_no'], line['text'], item=line)
 
     for rid, pattern in (("R_FIGURE", r"^(?:рисунок|рис\.|сурет|figure|fig\.)\s*(\d+(?:\.\d+)*)\s*[-–—.:]?\s*(.*)$"),
                          ("R_TABLE", r"^(?:таблица|кесте|table)\s*(\d+(?:\.\d+)*)\s*[-–—.:]?\s*(.*)$")):
         captions = [(p, line, re.match(pattern, line["text"], re.I)) for p in pages for line in p["lines"]
                     if re.match(pattern, line["text"], re.I)]
-        for p, line, match in captions[:40]:
+        for p, line, match in captions:
             # A caption must have a number and a non-empty title.
-            add(rid, "pass" if match.group(2).strip() else "fail", p["page_no"], line["text"])
+            add(rid, "pass" if match.group(2).strip() else "fail", p["page_no"], line["text"], item=line)
         if not captions:
             add(rid, "uncertain", message="no_evidence")
 
     ref_page = section_locations["references"]
     body_text = "\n".join(p["text"] for p in pages if p["page_no"] < (ref_page or len(pages) + 1))
     citations = re.findall(r"\[\s*\d+(?:\s*[,;–\-]\s*[^\]\n]+)?\s*\]", body_text)
+    citation_lines = [(p, line) for p in pages if p['page_no'] < (ref_page or len(pages) + 1)
+                      for line in p['lines'] if re.search(r'\[\s*\d+', line['text'])]
+    for _, line in citation_lines:
+        inspect('R_REFERENCE', line['text'])
     if citations:
         cited = [int(re.search(r'\d+', c).group()) for c in citations]
         first_seen = list(dict.fromkeys(cited))
         ordered = first_seen == sorted(first_seen) and first_seen[0] == 1
-        add("R_REFERENCE", "pass" if ordered and ref_page else "fail", evidence="; ".join(citations[:20]))
+        if not ordered:
+            seen = set()
+            for p, line in citation_lines:
+                firsts = [int(m.group()) for m in re.finditer(r'(?<=\[)\s*\d+', line['text'])]
+                bad = False
+                for value in firsts:
+                    if value not in seen:
+                        bad = bad or (not seen and value != 1) or (bool(seen) and value < max(seen))
+                        seen.add(value)
+                if bad:
+                    add('R_REFERENCE', 'fail', p['page_no'], line['text'], item=line)
+        else:
+            add("R_REFERENCE", "pass" if ref_page else "fail", evidence="; ".join(citations[:20]))
     else:
         add("R_REFERENCE", "uncertain", message="no_evidence")
     if appendix:
-        for p, line in appendix[:20]:
+        for p, line in appendix:
             suffix = line["text"].split()[-1]
-            add("R_APPENDIX", "pass" if suffix.isdigit() else "fail", p["page_no"], line["text"])
+            add("R_APPENDIX", "pass" if suffix.isdigit() else "fail", p["page_no"], line["text"], item=line)
         add("R_APPENDIX", "uncertain", message="not_measurable")
     else:
         add("R_APPENDIX", "uncertain", message="no_evidence")
@@ -266,8 +343,25 @@ def check_pdf(path, *, duration="1", language="kk", profile=None):
     for p in pages:
         if len(p["text"].strip()) < 20:
             add("R_VISUAL", "uncertain", p["page_no"], message="mixed_scans")
+    # A previous anchor is checked only when its actual text survives inside
+    # the current text inspected for that same rule. Page numbers are irrelevant.
+    # Joining lines permits a paragraph to wrap differently without claiming
+    # that deleted or uninspected text has been corrected.
+    if isinstance(previous_findings, (list, tuple)):
+        current_text = {rid: normalize(' '.join(texts)) for rid, texts in inspected.items()}
+        for old in previous_findings[:MAX_FINDINGS]:
+            if not isinstance(old, dict):
+                continue
+            rid, anchor = old.get('rule_id'), old.get('anchor')
+            if (isinstance(rid, str) and rid in checked and isinstance(anchor, str) and normalize(anchor)
+                    and re.search(r'(?<!\w)' + re.escape(normalize(anchor)) + r'(?!\w)', current_text[rid])):
+                checked[rid].add(hashlib.sha256(normalize(anchor).encode('utf-8')).hexdigest())
+    if any(truncation.values()):
+        add('R_VISUAL', 'uncertain', evidence='Evidence truncated: ' + str(truncation), message='not_measurable')
     counts = Counter(f["status"] for f in findings)
-    return dict(schema_version=1, engine="apa-pdf-0.1.0", profile=profile, language=language, duration=duration,
+    return dict(schema_version=2, engine="apa-pdf-0.2.0", profile=profile, language=language, duration=duration,
                 page_count=len(pages), body_pages=body_pages, appendix_start=appendix_start,
                 original_sha256=hashlib.sha256(Path(path).read_bytes()).hexdigest(),
-                counts={s: counts[s] for s in ("pass", "fail", "uncertain", "na")}, findings=findings)
+                counts={s: counts[s] for s in ("pass", "fail", "uncertain", "na")}, findings=findings,
+                checked_anchors={rid: sorted(values) for rid, values in checked.items()},
+                evidence_truncated=any(truncation.values()), truncation=truncation)

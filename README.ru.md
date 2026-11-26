@@ -1,5 +1,7 @@
 # Академический нормконтроль · Русский
 
+0.4.0: жёлтое выделение строк с ошибками, точный переход по номеру страницы и автоматическое сравнение исправленной версии. [Инструкция](docs/HIGHLIGHTS-AND-REVISIONS.md).
+
 Полная интернет-версия: Render Free + Supabase Free. [Размещение, безопасность и ограничения бесплатных планов](docs/FREE-CLOUD.md).
 
 **Открыть платформу:** [apa-thesis-checker.onrender.com](https://apa-thesis-checker.onrender.com/). [Кабинет куратора](https://apa-thesis-checker.onrender.com/curator/) доступен после входа.

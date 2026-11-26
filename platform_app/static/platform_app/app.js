@@ -54,7 +54,7 @@ const documentPreview = document.getElementById('document-preview');
 if (documentPreview) {
   document.querySelectorAll('[data-pdf-page]').forEach(link => link.addEventListener('click', event => {
     event.preventDefault();
-    documentPreview.src = `${documentPreview.dataset.pdfUrl}#page=${link.dataset.pdfPage}&toolbar=0`;
+    documentPreview.src = link.href;
     documentPreview.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start'});
   }));
 }

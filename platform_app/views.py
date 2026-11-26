@@ -5,6 +5,7 @@ import re
 import secrets
 import time
 import zipfile
+import uuid
 from pathlib import Path
 
 from django.conf import settings
@@ -29,6 +30,7 @@ from .models import RuleProfile, Submission, StudyGroup, RosterStudent
 from .curator import find_enrollment, curated_submission
 from .reports import pdf_report
 from .result_validation import valid_result
+from .revisions import comparison_for, previous_for
 
 
 def limited(request, action, maximum=20):
@@ -159,6 +161,16 @@ def history(request):
 def upload(request):
     seed_profile()
     error = ""
+    previous = None
+    previous_id = request.POST.get('previous') if request.method == 'POST' else request.GET.get('previous')
+    if previous_id:
+        try:
+            previous_pk = uuid.UUID(previous_id)
+        except (ValueError, AttributeError, TypeError):
+            return not_found(request)
+        previous = get_object_or_404(Submission, pk=previous_pk, owner=request.user)
+        if previous.status != 'done' or not valid_result(previous.result, previous.profile):
+            return render(request, 'platform_app/error.html', {'error':strings(request.LANGUAGE_CODE)['revision_unavailable']}, status=409)
     if request.method == "POST":
         file = request.FILES.get("file")
         lang = request.POST.get("language")
@@ -178,7 +190,7 @@ def upload(request):
             if profile is None:
                 error = "worker_error"
             else:
-                work = Submission(owner=request.user, title=title, language=lang, duration=duration, profile=profile.snapshot())
+                work = Submission(owner=request.user, previous=previous, title=title, language=lang, duration=duration, profile=profile.snapshot())
                 try:
                     work.file.save(f"{work.id}.pdf", file, save=False)
                 except OSError:
@@ -196,7 +208,10 @@ def upload(request):
                     else:
                         return redirect("detail", pk=work.pk)
     profile = RuleProfile.objects.filter(active=True).first()
-    return render(request, "platform_app/upload.html", {"error": strings(request.LANGUAGE_CODE).get(error), "profile": profile})
+    values = request.POST if request.method == 'POST' else {'title':previous.title if previous else '',
+        'language':previous.language if previous else request.LANGUAGE_CODE, 'duration':previous.duration if previous else '1'}
+    return render(request, "platform_app/upload.html", {"error": strings(request.LANGUAGE_CODE).get(error), "profile": profile,
+        'previous':previous, 'form_values':values})
 
 
 @login_required
@@ -204,13 +219,26 @@ def detail(request, pk, curator_view=False):
     job = curated_submission(request, pk) if curator_view else get_object_or_404(Submission, pk=pk, owner=request.user)
     valid = valid_result(job.result, job.profile)
     result = job.result if valid else {}
-    findings = [finding_text(f, request.LANGUAGE_CODE) for f in result.get("findings", [])]
+    findings = [dict(finding_text(f, request.LANGUAGE_CODE, job.profile, job.duration), index=index)
+                for index, f in enumerate(result.get("findings", []))]
     t = strings(request.LANGUAGE_CODE)
     counts = [(s, t[s], result.get("counts", {}).get(s, 0)) for s in ("pass", "fail", "uncertain", "na")]
     prefix = "curator_" if curator_view else ""
-    job_urls = {"preview": reverse(prefix+"preview", args=[job.pk]), "status": reverse(prefix+"job_status", args=[job.pk])}
+    job_urls = {"preview": reverse(prefix+"preview", args=[job.pk]), "status": reverse(prefix+"job_status", args=[job.pk]),
+                'viewer':reverse(prefix+'viewer',args=[job.pk])}
     job_urls.update({kind: reverse(prefix+"download", args=[job.pk, kind]) for kind in ("pdf", "json", "original")})
+    comparison = comparison_for(job) if valid and job.status == 'done' else None
+    comparison_rows = []
+    if comparison:
+        for row in comparison.get('rows', []):
+            current, previous_finding = row.get('current'), row.get('previous')
+            finding = current or previous_finding or {}
+            comparison_rows.append(dict(row, label=t.get('comparison_'+row['status'],row['status']),
+                title=t.get(finding.get('rule_id'),''), old_page=previous_finding.get('page') if previous_finding else None,
+                new_page=current.get('page') if current else None))
+    first_error = next((f['page'] for f in findings if f['status']=='fail' and f.get('page')),1)
     response = render(request, "platform_app/detail.html", dict(job=job, findings=findings, counts=counts,
+                  comparison=comparison, comparison_rows=comparison_rows, previous=previous_for(job), first_error=first_error,
                   job_urls=job_urls, can_delete=not curator_view, curator_view=curator_view,
                   report_invalid=job.status == "done" and not valid,
                   return_url=reverse("curator_group", args=[job.owner.student_roster.group_id]) if curator_view else reverse("history"),
@@ -252,7 +280,8 @@ def download(request, pk, kind, curator_view=False):
     elif kind == "json":
         result = dict(job.result)
         result["report_language"] = request.LANGUAGE_CODE
-        result["findings"] = [finding_text(f, request.LANGUAGE_CODE) for f in result["findings"]]
+        result["findings"] = [finding_text(f, request.LANGUAGE_CODE, job.profile, job.duration) for f in result["findings"]]
+        result['comparison'] = comparison_for(job)
         response = HttpResponse(json.dumps(result, ensure_ascii=False, indent=2), content_type="application/json; charset=utf-8")
         response["Content-Disposition"] = 'attachment; filename="report.json"'
     elif kind == "pdf":
