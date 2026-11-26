@@ -41,14 +41,15 @@ def pdf_report(job, lang):
         flow.append(p(t['comparison_hint']))
     for finding in job.result["findings"]:
         f = finding_text(finding, lang, job.profile, job.duration)
-        flow.append(p(f"{f['rule_id']} · {f['title']} — {f['status_label']}", label))
+        block = [p(f"{f['rule_id']} · {f['title']} — {f['status_label']}", label)]
         if f["page"]:
-            flow.append(p(f"{t['page']}: {f['page']}"))
-        flow += [p(f["explanation"]), p(f"{t['evidence']}: {f['evidence'] or '—'}"),
+            block.append(p(f"{t['page']}: {f['page']}"))
+        block += [p(f["explanation"]), p(f"{t['evidence']}: {f['evidence'] or '—'}"),
                  p(f"{t['method']}: {f['method_label']}"), p(f"{t['source_clause']}: {f['clause']}"),
                  p(f"{t['expected']}: {f['expected']}"),
                  p(f"{t['recommendation']}: {f['recommendation']}"),
                  p(f"{t['correct_example']}: {f['correct_example']}"), Spacer(1, 8)]
+        flow.append(KeepTogether(block))
     flow += [p(t["requirements"], label), p(job.profile["source_url"])]
 
     def footer(canvas, document):
