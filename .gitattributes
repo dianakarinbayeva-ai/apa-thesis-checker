@@ -1,2 +1,2 @@
 # Preserve the official artwork byte-for-byte across Windows and Linux.
-/platform_app/static/platform_app/academy/academy-logo-*.svg -text
+/platform_app/static/platform_app/academy/academy-logo-*.svg -text whitespace=cr-at-eol
