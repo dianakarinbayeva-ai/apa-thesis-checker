@@ -56,7 +56,7 @@ password_hint|Кемінде 10 таңба. Кең таралған немесе
 auth_error|Пайдаланушы аты немесе құпиясөз қате.|Неверное имя пользователя или пароль.|Incorrect username or password.
 register_error|Пайдаланушы аты бос емес, 3–50 латын әрпі, сан немесе _ таңбасынан тұруы керек.|Имя занято или некорректно: используйте 3–50 латинских букв, цифр или _.|Username is taken or invalid. Use 3–50 Latin letters, digits or underscores.
 password_error|Құпиясөздер сәйкес келуі және қауіпсіздік талаптарына сай болуы керек.|Пароли должны совпадать и соответствовать требованиям безопасности.|Passwords must match and meet the security requirements.
-welcome|Жұмысыңызды тексеруге дайынсыз ба?|Готовы проверить вашу работу?|Ready to review your thesis?
+welcome|Жобаңызды тексеруге дайынсыз ба?|Готовы проверить ваш проект?|Ready to review your master's project?
 intro|PDF жүктеңіз. Академия талаптарына сай тексеру мен түсінікті ұсыныстар алыңыз.|Загрузите PDF и получите проверку по требованиям Академии с понятными рекомендациями.|Upload a PDF for an Academy-specific review with clear recommendations.
 new_check|Жаңа тексеру|Новая проверка|New review
 total|Барлық жұмыстар|Всего работ|Total submissions
@@ -172,7 +172,7 @@ step3|Ұсыныстар алыңыз|Получите рекомендации|
 draft|Алдын ала нұсқа|Предварительная версия|Preview release
 home|Басты бет|Главная|Home
 platform_label|Магистранттарға арналған платформа|Платформа для магистрантов|A platform for master's students
-hero_title|Магистрлік жұмысыңызды сенімді тапсырыңыз|Подготовьте вашу работу к сдаче|Prepare your thesis for submission
+hero_title|Магистрлік жобаңызды сенімді тапсырыңыз|Подготовьте магистерский проект к сдаче|Prepare your master's project for submission
 hero_description|PDF құжатын жүктеңіз. Академия талаптарына сай рәсімдеуді автоматты тексеріп, әр бет бойынша түсінікті есеп алыңыз.|Загрузите PDF. Получите автоматическую проверку оформления по требованиям Академии и понятный отчёт по страницам.|Upload your PDF. Get an automatic review against the Academy's requirements and clear page-by-page findings.
 academy_website|Академия сайты|Сайт Академии|Academy website
 learn_more|Талаптармен танысу|Посмотреть требования|Explore the requirements
@@ -180,10 +180,10 @@ file_size_label|Файл көлемі|Размер файла|File size
 page_limit_label|Құжат көлемі|Объём документа|Document length
 languages_label|Интерфейс және есеп|Интерфейс и отчёт|Interface and reports
 standard_label|Академия талаптары|Требования Академии|Academy requirements
-upload_description|Жұмысыңыздың PDF нұсқасын таңдап, тіл мен оқу ұзақтығын көрсетіңіз.|Выберите PDF вашей работы, укажите язык и длительность программы.|Choose your thesis PDF, document language and programme duration.
+upload_description|Магистрлік жобаңыздың PDF нұсқасын таңдап, тіл мен оқу ұзақтығын көрсетіңіз.|Выберите PDF магистерского проекта, укажите язык и длительность программы.|Choose your master's project PDF, document language and programme duration.
 processing_description|Жүйе бет пішімін, қаріпті, нөмірленуді және құрылымды автоматты тексереді.|Система автоматически проверит формат страниц, шрифт, нумерацию и структуру.|The system automatically checks page size, fonts, numbering and structure.
 report_description|Ескертулерді беттерімен бірге көріп, PDF немесе JSON есебін жүктеңіз.|Просмотрите замечания с номерами страниц и скачайте отчёт PDF или JSON.|View findings with page numbers and download a PDF or JSON report.
-ready_to_start|Жұмысыңыз дайын ба?|Готовы загрузить работу?|Ready to upload your thesis?
+ready_to_start|Жобаңыз дайын ба?|Готовы загрузить проект?|Ready to upload your master's project?
 workspace_subtitle|Барлық жұмысыңыз бен тексеру нәтижелері бір жерде.|Все ваши работы и результаты проверок в одном месте.|Your submissions and review results, together in one place.
 selected_standard|Тексеру талаптары|Требования проверки|Review requirements
 upload_zone|PDF файлын осы жерге апарыңыз|Перетащите PDF сюда|Drop your PDF here
@@ -212,7 +212,7 @@ navigation|Негізгі мәзір|Основное меню|Main navigation
 show_password|Құпиясөзді көрсету|Показать пароль|Show password
 hide_password|Құпиясөзді жасыру|Скрыть пароль|Hide password
 local_privacy|Түпнұсқа сақталады|Оригинал сохраняется|Original preserved
-footer_description|Магистрлік жұмыстардың рәсімделуін тексеруге арналған цифрлық орта.|Цифровая среда для проверки оформления магистерских работ.|A digital workspace for reviewing master's thesis formatting.
+footer_description|Магистрлік жобалардың рәсімделуін тексеруге арналған цифрлық орта.|Цифровая среда для проверки оформления магистерских проектов.|A digital workspace for reviewing master's project formatting.
 '''
 
 TEXT = {lang: {} for lang in ("kk", "ru", "en")}
@@ -230,6 +230,8 @@ def context(request):
     from .version import VERSION
     from .curator import can_curate
     return {"t": strings(request.LANGUAGE_CODE), "interface_language": request.LANGUAGE_CODE,
+            "academy_logo_path": "platform_app/academy/academy-logo-" +
+                (request.LANGUAGE_CODE if request.LANGUAGE_CODE in TEXT else "kk") + ".svg",
             "app_version": VERSION, "user_can_curate": can_curate(request.user)}
 
 
